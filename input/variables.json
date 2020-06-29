@@ -1,0 +1,26 @@
+{
+    "hycom": {
+        "depth": "depth",
+        "lat": "lat",
+        "lon": "lon",
+        "time": "time",
+        "tau": "tau",
+        "u": "water_u",
+        "v": "water_v",
+        "temp": "water_temp",
+        "salinity": "salinity",
+        "ssh": "surf_el"
+    },
+    "cmems": {
+        "depth": "depth",
+        "lat": "latitude",
+        "lon": "longitude",
+        "time": "time",
+        "u": "uo",
+        "v": "vo",
+        "temp": "thetao",
+        "salinity": "so",
+        "mld": "mlotst",
+        "sea_ice_cover": "siconc"
+    }
+}

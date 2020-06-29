@@ -1,0 +1,8 @@
+input/logins.json
+input/dirs.json
+
+*.log
+*.nc
+*.pyc
+
+temp_*

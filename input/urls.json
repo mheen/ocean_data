@@ -1,0 +1,9 @@
+{
+    "hycom_daily_reanalysis": "http://tds.hycom.org/thredds/dodsC/GLBv0.08/expt_53.X/data/",
+    "cmems_main": "my.cmems-du.eu",
+    "cmems_phys_daily_reanalysis": "Core/GLOBAL_REANALYSIS_PHY_001_030/global-reanalysis-phy-001-030-daily/",
+    "cmems_phys_monthly_reanalysis": "Core/GLOBAL_REANALYSIS_PHY_001_030/global-reanalysis-phy-001-030-monthly/",
+    "cmems_bio_daily_reanalysis": "Core/GLOBAL_REANALYSIS_BIO_001_029/global-reanalysis-bio-001-029-daily/",
+    "cmems_bio_monthly_reanalysis": "Core/GLOBAL_REANALYSIS_BIO_001_029/global-reanalysis-bio-001-029-monthly/",
+    "cmems_waves_reanalysis": "Core/GLOBAL_REANALYSIS_WAV_001_032/global-reanalysis-wav-001-032/"
+}
