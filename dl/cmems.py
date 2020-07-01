@@ -1,5 +1,5 @@
-from dataclass import PhysData
-import dl.log as log
+from dataclass import DataConverter
+import log
 from utilities import get_ncfiles_in_dir
 from utilities import get_urls,get_logins
 from utilities import get_n_months,add_month_to_timestamp,convert_time_to_datetime
@@ -105,7 +105,7 @@ def _dl_file(ftp,filenames,output_dir,log_file,variables,i_depths,i_times):
             log.info(log_file, f'File {temp_output_path} already exists, skipping download.')
             # save requested variables and depth levels and remove temporary full file            
             data = Dataset(temp_output_path)
-            cmemsdata = PhysData(data,i_times,i_depths,variables,'cmems')
+            cmemsdata = DataConverter(data,i_times,i_depths,variables,'cmems')
             output_path = cmemsdata.write_to_netcdf(output_dir)
             log.info(log_file,f'Saved permanent requested file: {output_path}')
             err_message = _check_permanent_netcdf(output_path)

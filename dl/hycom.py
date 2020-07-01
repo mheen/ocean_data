@@ -1,5 +1,5 @@
-from dataclass import PhysData
-import dl.log as log
+from dataclass import DataConverter
+import log as log
 from utilities import convert_time_to_datetime,convert_datetime_to_time
 from utilities import get_time_indices,get_variable_name
 from netCDF4 import Dataset
@@ -36,6 +36,6 @@ def opendap_server(output_dir,main_data_url,start_date,end_date,log_file='dl/hyc
             # download daily output
             log.info(log_file,f'Downloading {time.strftime("%d-%m-%Y")}')
             i_times = get_time_indices(times,time)
-            hycomdata = PhysData(data,i_times,i_depths,variables,'hycom')            
+            hycomdata = DataConverter(data,i_times,i_depths,variables,'hycom')            
             hycomdata.write_to_netcdf(output_dir)
         data.close()

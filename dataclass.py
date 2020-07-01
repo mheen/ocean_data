@@ -2,7 +2,7 @@ from utilities import get_variable_name,convert_time_to_datetime
 from netCDF4 import Dataset
 import numpy as np
 
-class PhysData:
+class DataConverter:
     def __init__(self,data,i_times,i_depths,variables,model_name):
         self.time = []
         self.time_units = []
@@ -28,6 +28,8 @@ class PhysData:
         self.mld_units = []
         self.sea_ice_cover = []
         self.sea_ice_cover_units = []
+        self.o2 = []
+        self.o2_units = []
         self.fill_dimensions(data,i_times,i_depths,model_name)
         self.fill_variables(data,i_times,i_depths,variables,model_name)
 
@@ -58,10 +60,15 @@ class PhysData:
             setattr(self,variable,values)
             setattr(self,variable+'_units',units)
 
-    def write_to_netcdf(self,output_dir):
-        time = convert_time_to_datetime(self.time,self.time_units)
-        time_string = time[0].strftime('%Y%m%d')
+    def get_output_path(self,output_dir,filename_format='%Y%m%d'):
+        time = convert_time_to_datetime(self.time[0],self.time_units)
+        time_string = time.strftime(filename_format)
         output_path = output_dir+time_string+'.nc'
+        return output_path
+
+    def write_to_netcdf(self,output_dir,filename_format='%Y%m%d'):
+        time = convert_time_to_datetime(self.time,self.time_units)        
+        output_path = self.get_output_path(output_dir,filename_format=filename_format)
         nc = Dataset(output_path,'w',format='NETCDF4')
         # --- define dimensions ---
         nc.createDimension('time',len(self.time))
@@ -121,5 +128,10 @@ class PhysData:
             nc_mld = nc.createVariable('mld',float,variables_size,zlib=True)
             nc_mld[:] = self.mld
             nc_mld.units = self.mld_units
+        # o2
+        if len(self.o2) != 0:
+            nc_o2 = nc.createVariable('o2',float,variables_size,zlib=True)
+            nc_o2[:] = self.o2
+            nc_o2.units = self.o2_units
         nc.close()
         return output_path
