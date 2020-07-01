@@ -21,6 +21,7 @@
         "temp": "thetao",
         "salinity": "so",
         "mld": "mlotst",
-        "sea_ice_cover": "siconc"
+        "sea_ice_cover": "siconc",
+        "o2": "o2"
     }
 }
