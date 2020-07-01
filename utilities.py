@@ -17,6 +17,15 @@ def get_variable_name(model,variable,json_file='input/variables.json'):
         model = all_models[model]
     return model[variable]
 
+def get_variable_name_reverse(model,variable,json_file='input/variables.json'):
+    with open(json_file,'r') as f:
+        all_models = json.load(f)
+        model = all_models[model]
+    model_variable_names = list(model.values())
+    variable_names = list(model.keys())
+    i_variable = model_variable_names.index(variable)
+    return variable_names[i_variable]
+
 def get_urls(model,json_file='input/urls.json'):
     with open(json_file,'r') as f:
         all_urls = json.load(f)
@@ -100,15 +109,10 @@ def get_n_months(start_date,end_date):
     return n_months
 
 def add_month_to_timestamp(timestamp,n_month):
-    total_months = timestamp.month+n_month
-    if total_months > 12:
-        quotient,remainder = divmod(total_months,12)
-        month = remainder
-        year = timestamp.year+quotient
-        return datetime(year,month,timestamp.day)
-    else:
-        month = timestamp.month+n_month
-        return datetime(timestamp.year,month,timestamp.day)
+    month = timestamp.month - 1 + n_month
+    year = timestamp.year + month // 12
+    month = month % 12 + 1
+    return datetime(year,month,timestamp.day)
 
 def convert_time_to_datetime(time_org,time_units):
     time = []
@@ -122,7 +126,7 @@ def convert_time_to_datetime(time_org,time_units):
     if time_units.startswith('seconds'):
         if time_org.shape == ():
             time = base_time+timedelta(seconds=float(time_org))
-            return np.array(time)
+            return time
         for t in time_org:
             if not np.isnan(t):
                 time.append(base_time+timedelta(seconds=float(t)))
@@ -132,7 +136,7 @@ def convert_time_to_datetime(time_org,time_units):
     elif time_units.startswith('hours'):
         if time_org.shape == ():
             time = base_time+timedelta(hours=float(time_org))
-            return np.array(time)
+            return time
         for t in time_org:
             if not np.isnan(t):
                 time.append(base_time+timedelta(hours=float(t)))
@@ -141,11 +145,11 @@ def convert_time_to_datetime(time_org,time_units):
         return np.array(time)
     elif time_units.startswith('days'):
         if time_org.shape == ():
-            time = base_time+timedelta(hours=float(time_org))/24
-            return np.array(time)
+            time = base_time+timedelta(days=float(time_org))
+            return time
         for t in time_org:
             if not np.isnan(t):
-                time.append(base_time+timedelta(hours=float(t))/24)
+                time.append(base_time+timedelta(days=float(t)))
             else:
                 time.append(np.nan)
         return np.array(time)
