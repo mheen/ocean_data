@@ -1,5 +1,6 @@
 input/logins.json
 input/dirs.json
+.vscode/*
 
 *.log
 *.nc
