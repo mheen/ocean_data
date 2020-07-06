@@ -1,137 +1,213 @@
 from utilities import get_variable_name,convert_time_to_datetime
 from netCDF4 import Dataset
 import numpy as np
+import matplotlib.pyplot as plt
+import cartopy.crs as ccrs
 
-class DataConverter:
-    def __init__(self,data,i_times,i_depths,variables,model_name):
-        self.time = []
-        self.time_units = []
-        self.lon = []
-        self.lon_units = []
-        self.lat = []
-        self.lat_units = []
-        self.depth = []
-        self.depth_units = []
-        self.u = []
-        self.u_units = []
-        self.v = []
-        self.v_units = []
-        self.w = []
-        self.w_units = []
-        self.temp = []
-        self.temp_units = []
-        self.salinity = []
-        self.salinity_units = []
-        self.ssh = []
-        self.ssh_units = []
-        self.mld = []
-        self.mld_units = []
-        self.sea_ice_cover = []
-        self.sea_ice_cover_units = []
-        self.o2 = []
-        self.o2_units = []
-        self.fill_dimensions(data,i_times,i_depths,model_name)
-        self.fill_variables(data,i_times,i_depths,variables,model_name)
+class Dimension:
+    def __init__(self, name: str, values: np.ndarray, units: str):
+        self.name = name
+        self.values = values
+        self.units = units
+        self.length = len(values)
+        if name == 'time':
+            self.datetime = convert_time_to_datetime(self.values,self.units)
 
-    def fill_dimensions(self,data,i_times,i_depths,model_name):
-        model_time = get_variable_name(model_name,'time')
-        self.time = data[model_time][i_times].filled(fill_value=np.nan)
-        self.time_units = data[model_time].units
-        model_lon = get_variable_name(model_name,'lon')
-        self.lon = data[model_lon][:].filled(fill_value=np.nan)
-        self.lon_units = data[model_lon].units
-        model_lat = get_variable_name(model_name,'lat')
-        self.lat = data[model_lat][:].filled(fill_value=np.nan)
-        self.lat_units = data[model_lat].units
-        model_depth = get_variable_name(model_name,'depth')
-        self.depth = data[model_depth][i_depths].filled(fill_value=np.nan)
-        if type(i_depths) == int:
-            self.depth = [self.depth]
-        self.depth_units = data[model_depth].units
+class Quantity:
+    def __init__(self, name: str, values: np.ndarray, units: str):
+        self.values = values
+        self.units = units
+        self.name = name
 
-    def fill_variables(self,data,i_times,i_depths,variables,model_name):
-        for variable in variables:
-            model_variable = get_variable_name(model_name,variable)
-            if len(data[model_variable].shape) == 3:
-                values = data[model_variable][i_times,:,:].filled(fill_value=np.nan)
-            elif len(data[model_variable].shape) == 4:
-                values = data[model_variable][i_times,i_depths,:,:].filled(fill_value=np.nan)
-            units = data[model_variable].units
-            setattr(self,variable,values)
-            setattr(self,variable+'_units',units)
+class Quantity3D(Quantity):
+    def __init__(self, name: str, values: np.ndarray, units: str):
+        super().__init__(name,values,units)
+        self.dimensions = ('time','lat','lon')
+
+class Quantity4D(Quantity):
+    def __init__(self, name: str, values: np.ndarray, units: str):
+        super().__init__(name,values,units)
+        self.dimensions = ('time','depth','lat','lon')
+
+def netcdf_to_dimension(netcdf: Dataset, variable_name: str, new_name=None, i_use=None) -> Dimension:
+    i_use = _all_slice_if_none(i_use)
+    values = netcdf[variable_name][i_use].filled(fill_value=np.nan)
+    units = netcdf[variable_name].units
+    new_name = _new_name_is_variable_name_if_none(new_name,variable_name)
+    return Dimension(new_name,values,units)
+
+def netcdf_to_quantity(netcdf: Dataset, variable_name: str, new_name=None,
+                       i_times=None, i_depths=None, i_lats=None, i_lons=None):
+    if len(netcdf[variable_name].shape) == 3:
+        return netcfd_to_quantity3D(netcdf,variable_name,new_name=new_name,
+                                    i_times=i_times,i_lats=i_lats,i_lons=i_lons)
+    if len(netcdf[variable_name].shape) == 4:
+        return netcdf_to_quantity4D(netcdf,variable_name,new_name=new_name,
+                                    i_times=i_times,i_depths=i_depths,
+                                    i_lats=i_lats,i_lons=i_lons)
+
+def netcfd_to_quantity3D(netcfd: Dataset, variable_name: str, new_name=None,
+                         i_times=None, i_lats=None, i_lons=None) -> Quantity3D:
+    i_times = _all_slice_if_none(i_times)
+    i_lats = _all_slice_if_none(i_lats)
+    i_lons = _all_slice_if_none(i_lons)
+    values = netcfd[variable_name][i_times,i_lats,i_lons].filled(fill_value=np.nan)
+    units = netcfd[variable_name].units
+    new_name = _new_name_is_variable_name_if_none(new_name,variable_name)
+    return Quantity3D(new_name,values,units)
+
+def netcdf_to_quantity4D(netcdf : Dataset, variable_name : str, new_name=None,
+                         i_times=None, i_depths=None,
+                         i_lats=None, i_lons=None) -> Quantity4D:
+    i_times = _all_slice_if_none(i_times)
+    i_depths = _all_slice_if_none(i_depths)
+    i_lats = _all_slice_if_none(i_lats)
+    i_lons = _all_slice_if_none(i_lons)
+    values = netcdf[variable_name][i_times,i_depths,i_lats,i_lons].filled(fill_value=np.nan)
+    units = netcdf[variable_name].units
+    new_name = _new_name_is_variable_name_if_none(new_name,variable_name)
+    return Quantity4D(new_name,values,units)
+
+def _new_name_is_variable_name_if_none(new_name,variable_name):
+    if new_name is None:
+        new_name = variable_name
+    return new_name
+
+def _all_slice_if_none(i):
+    if i is not None:
+        return i
+    return slice(None,None,None)
+
+class ModelData:
+    def __init__(self,
+        time: Dimension,
+        depth: Dimension,
+        lat: Dimension,
+        lon: Dimension,
+        u=None,
+        v=None,
+        w=None,
+        temp=None,
+        salinity=None,
+        ssh=None,
+        mld=None,
+        sea_ice_cover=None,
+        o2=None,
+        air_u=None,
+        air_v=None,
+        air_temp=None):
+        self.time = time
+        self.depth = depth
+        self.lat = lat
+        self.lon = lon
+        self.u = u
+        self.v = v
+        self.w = w
+        self.temp = temp
+        self.salinity = salinity
+        self.ssh = ssh
+        self.mld = mld
+        self.sea_ice_cover = sea_ice_cover
+        self.o2 = o2
+        self.air_u = air_u
+        self.air_v = air_v
+        self.air_temp = air_temp
+
+    def fill_variable(self,variable_name,variable):
+        if hasattr(self,variable_name):
+            setattr(self,variable_name,variable)
+        else:
+            raise ValueError(f'ModelData does not have {variable_name} attribute, failed to fill variable.')
+
+    def plot_variable(self,variable_name,i_time=0,i_depth=0):
+        variable = getattr(self,variable_name)
+        if variable is None:
+            raise ValueError(f'Requested variable {variable_name} to plot is empty in ModelData.')
+        if len(variable.dimensions) == 3:
+            plot_values = variable.values[i_time,:,:]
+        if len(variable.dimensions) == 4:
+            plot_values = variable.values[i_time,i_depth,:,:]
+        fig = plt.figure(figsize=(6,4))
+        ax = plt.gca(projection=ccrs.PlateCarree())
+        c = ax.contourf(self.lon.values,self.lat.values,plot_values,transform=ccrs.PlateCarree())
+        ax.coastlines()
+        cbar = fig.colorbar(c,label=f'{variable.name} [{variable.units}]')
+        plt.show()
+
+    def get_variable_names(self):
+        variable_names = list(set(self.__dict__.keys())-set(['time','depth','lat','lon']))
+        return variable_names
 
     def get_output_path(self,output_dir,filename_format='%Y%m%d'):
-        time = convert_time_to_datetime(self.time[0],self.time_units)
-        time_string = time.strftime(filename_format)
+        time_string = self.time.datetime[0].strftime(filename_format)
         output_path = output_dir+time_string+'.nc'
         return output_path
 
     def write_to_netcdf(self,output_dir,filename_format='%Y%m%d'):
-        time = convert_time_to_datetime(self.time,self.time_units)        
         output_path = self.get_output_path(output_dir,filename_format=filename_format)
         nc = Dataset(output_path,'w',format='NETCDF4')
         # --- define dimensions ---
-        nc.createDimension('time',len(self.time))
-        nc.createDimension('lat',len(self.lat))
-        nc.createDimension('lon',len(self.lon))
-        nc.createDimension('depth',len(self.depth))
-        variables_size = ('time','depth','lat','lon')
+        nc.createDimension(self.time.name,self.time.length)
+        nc.createDimension(self.depth.name,self.depth.length)
+        nc.createDimension(self.lat.name,self.lat.length)
+        nc.createDimension(self.lon.name,self.lon.length)
+        # --- write dimensions ---
+        nc_time = nc.createVariable(self.time.name,float,self.time.name,zlib=True)
+        nc_time[:] = self.time.values
+        nc_time.units = self.time.units
+        nc_depth = nc.createVariable(self.depth.name,float,self.depth.name,zlib=True)
+        nc_depth[:] = self.depth.values
+        nc_depth.units = self.depth.units
+        nc_lat = nc.createVariable(self.lat.name,float,self.lat.name,zlib=True)
+        nc_lat[:] = self.lat.values
+        nc_lat.units = self.lat.units
+        nc_lon = nc.createVariable(self.lon.name,float,self.lon.name,zlib=True)
+        nc_lon[:] = self.lon.values
+        nc_lon.units = self.lon.units
         # --- define and write variables ---
-        # time
-        nc_time = nc.createVariable('time',float,'time',zlib=True)
-        nc_time[:] = self.time
-        nc_time.units = self.time_units
-        # lon
-        nc_lon = nc.createVariable('lon',float,'lon',zlib=True)
-        nc_lon[:] = self.lon
-        nc_lon.units = self.lon_units
-        # lat
-        nc_lat = nc.createVariable('lat',float,'lat',zlib=True)
-        nc_lat[:] = self.lat
-        nc_lat.units = self.lat_units
-        # depth
-        nc_depth = nc.createVariable('depth',float,'depth',zlib=True)
-        nc_depth[:] = self.depth
-        nc_depth.units = self.depth_units
-        # u-velocity
-        if len(self.u) != 0:
-            nc_u = nc.createVariable('u',float,variables_size,zlib=True)
-            nc_u[:] = self.u
-            nc_u.units = self.u_units
-        # v-velocity
-        if len(self.v) != 0:
-            nc_v = nc.createVariable('v',float,variables_size,zlib=True)
-            nc_v[:] = self.v
-            nc_v.units = self.v_units
-        # w-velocity
-        if len(self.w) != 0:
-            nc_w = nc.createVariable('w',float,variables_size,zlib=True)
-            nc_w[:] = self.w
-            nc_w.units = self.w_units
-        # temperature
-        if len(self.temp) != 0:
-            nc_temp = nc.createVariable('temp',float,variables_size,zlib=True)
-            nc_temp[:] = self.temp
-            nc_temp.units = self.temp_units
-        # salinity
-        if len(self.salinity) != 0:
-            nc_salinity = nc.createVariable('salinity',float,variables_size,zlib=True)
-            nc_salinity[:] = self.salinity
-            nc_salinity.units = self.salinity_units
-        # ssh
-        if len(self.ssh) != 0:
-            nc_ssh = nc.createVariable('ssh',float,('time','lat','lon'),zlib=True)
-            nc_ssh[:] = self.ssh
-            nc_ssh.units = self.ssh_units
-        # mld
-        if len(self.mld) != 0:
-            nc_mld = nc.createVariable('mld',float,variables_size,zlib=True)
-            nc_mld[:] = self.mld
-            nc_mld.units = self.mld_units
-        # o2
-        if len(self.o2) != 0:
-            nc_o2 = nc.createVariable('o2',float,variables_size,zlib=True)
-            nc_o2[:] = self.o2
-            nc_o2.units = self.o2_units
+        variable_names = self.get_variable_names()
+        for variable_name in variable_names:
+            variable = getattr(self,variable_name)
+            if variable is None:
+                continue
+            nc_var = nc.createVariable(variable.name,float,variable.dimensions,zlib=True)
+            nc_var[:] = variable.values
+            nc_var.units = variable.units
+            nc_var = None
         nc.close()
         return output_path
+        
+def from_downloaded(netcdf : Dataset, variables : list, model_name : str,
+                    i_times=None, i_depths=None, i_lats=None, i_lons=None) -> ModelData:
+    time_name = get_variable_name(model_name,'time')
+    time = netcdf_to_dimension(netcdf,time_name,new_name='time',i_use=i_times)
+    depth_name = get_variable_name(model_name,'depth')
+    depth = netcdf_to_dimension(netcdf,depth_name,new_name='depth',i_use=i_depths)
+    lat_name = get_variable_name(model_name,'lat')
+    lat = netcdf_to_dimension(netcdf,lat_name,new_name='lat',i_use=None)
+    lon_name = get_variable_name(model_name,'lon')
+    lon = netcdf_to_dimension(netcdf,lon_name,new_name='lon',i_use=i_lons)
+    modeldata = ModelData(time,depth,lat,lon)
+    for variable_name in variables:
+        variable_name_model = get_variable_name(model_name,variable_name)
+        variable = netcdf_to_quantity(netcdf,variable_name_model,new_name=variable_name,
+                                        i_times=i_times,i_depths=i_depths,i_lats=i_lats,i_lons=i_lons)
+        modeldata.fill_variable(variable_name,variable)
+    return modeldata
+
+def from_local_file(input_path : str, variables=None,
+                    i_times=None, i_depths=None, i_lats=None, i_lons=None) -> ModelData:
+    netcdf = Dataset(input_path)
+    time = netcdf_to_dimension(netcdf,'time',i_times)
+    depth = netcdf_to_dimension(netcdf,'depth',i_depths)
+    lat = netcdf_to_dimension(netcdf,'lat',i_lats)
+    lon = netcdf_to_dimension(netcdf,'lon',i_lons)
+    modeldata = ModelData(time,depth,lat,lon)
+    if variables is None:
+        variables = list(set(netcdf.variables.keys())-set(['time','depth','lat','lon']))
+    for variable_name in variables:
+        variable = netcdf_to_quantity(netcdf,variable_name,
+                                        i_times=i_times,i_depths=i_depths,i_lats=i_lats,i_lons=i_lons)
+        modeldata.fill_variable(variable_name,variable)
+    netcdf.close()
+    return modeldata

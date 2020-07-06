@@ -1,4 +1,4 @@
-from dataclass import DataConverter
+from dataclass import from_downloaded as modeldata_from_downloaded
 import log
 from utilities import get_ncfiles_in_dir
 from utilities import get_urls,get_logins
@@ -104,8 +104,8 @@ def _dl_file(ftp,filenames,output_dir,log_file,variables,i_depths,i_times):
         if os.path.exists(temp_output_path):
             log.info(log_file, f'File {temp_output_path} already exists, skipping download.')
             # save requested variables and depth levels and remove temporary full file            
-            data = Dataset(temp_output_path)
-            cmemsdata = DataConverter(data,i_times,i_depths,variables,'cmems')
+            netcdf = Dataset(temp_output_path)
+            cmemsdata = modeldata_from_downloaded(netcdf,variables,'cmems',i_times=i_times,i_depths=i_depths)
             output_path = cmemsdata.write_to_netcdf(output_dir)
             log.info(log_file,f'Saved permanent requested file: {output_path}')
             err_message = _check_permanent_netcdf(output_path)
@@ -115,7 +115,7 @@ def _dl_file(ftp,filenames,output_dir,log_file,variables,i_depths,i_times):
             log.info(log_file,f'Removing temp file: {temp_output_path}')
             os.remove(temp_output_path)
             os.rmdir(temp_output_dir)
-            data.close()
+            netcdf.close()
 
 def _check_permanent_netcdf(input_path:str) -> str:    
     # 1. check if netcdf file really exists
@@ -127,8 +127,8 @@ def _check_permanent_netcdf(input_path:str) -> str:
     # 3. check if time in netcdf file matches time string in filename
     filename,_ = os.path.splitext(os.path.basename(input_path))
     filename_time = datetime.strptime(filename,'%Y%m%d')
-    data = Dataset(input_path)
-    nc_time = convert_time_to_datetime(data['time'],data['time'].units)
+    netcdf = Dataset(input_path)
+    nc_time = convert_time_to_datetime(netcdf['time'],netcdf['time'].units)
     if not filename_time.date() == nc_time[0].date():
         return f'Time in netcdf file does not match name of netcdf file: {input_path}'
     # return None if all checks passed

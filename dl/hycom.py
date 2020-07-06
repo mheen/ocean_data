@@ -1,4 +1,4 @@
-from dataclass import DataConverter
+from dataclass import from_downloaded as modeldata_from_downloaded
 import log as log
 from utilities import convert_time_to_datetime,convert_datetime_to_time
 from utilities import get_time_indices,get_variable_name
@@ -24,9 +24,9 @@ def opendap_server(output_dir,main_data_url,start_date,end_date,log_file='dl/hyc
         year = start_date.year+n_year
         input_path = main_data_url+str(year)
         log.info(log_file,'Loading OpenDap data...')
-        data = Dataset(input_path)
-        times_org = data['time'][:]
-        time_units = data['time'].units
+        netcdf = Dataset(input_path)
+        times_org = netcdf['time'][:]
+        time_units = netcdf['time'].units
         times = convert_time_to_datetime(times_org,time_units)
         for time in times:
             output_path = output_dir+time.strftime('%Y%m%d')+'.nc'
@@ -36,6 +36,6 @@ def opendap_server(output_dir,main_data_url,start_date,end_date,log_file='dl/hyc
             # download daily output
             log.info(log_file,f'Downloading {time.strftime("%d-%m-%Y")}')
             i_times = get_time_indices(times,time)
-            hycomdata = DataConverter(data,i_times,i_depths,variables,'hycom')            
+            hycomdata = modeldata_from_downloaded(netcdf,variables,'hycom',i_times=i_times,i_depths=i_depths)           
             hycomdata.write_to_netcdf(output_dir)
-        data.close()
+        netcdf.close()
