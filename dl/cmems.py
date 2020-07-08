@@ -10,7 +10,7 @@ from datetime import datetime
 from time import time as time_now
 from ftplib import FTP,error_temp
 
-def ftp_server_retry(output_dir,main_ftp_dir,start_date,end_date,temporal_resolution,log_file='dl/cmems.log',variables=['u','v'],i_depths=[0],i_times=[0]):
+def ftp_server_retry(output_dir,main_ftp_dir,start_date,end_date,temporal_resolution,log_file='dl/cmems.log',variables=['u','v'],i_depths=[0],i_times=None):
     '''Calls the ftp_server function to download CMEMS data from FTP, if the connection to the FTP breaks during
     execution, the function is called again to retry connecting.
     
@@ -30,7 +30,7 @@ def ftp_server_retry(output_dir,main_ftp_dir,start_date,end_date,temporal_resolu
         log.info(log_file,'Trying to reconnect to FTP server...')
         ftp_server_retry(output_dir,main_ftp_dir,start_date,end_date,temporal_resolution,log_file=log_file,variables=variables,i_depths=i_depths)
 
-def ftp_server(output_dir,main_ftp_dir,start_date,end_date,temporal_resolution,log_file='dl_cmems.log',variables=['u','v'],i_depths=[0],i_times=[0]):
+def ftp_server(output_dir,main_ftp_dir,start_date,end_date,temporal_resolution,log_file='dl_cmems.log',variables=['u','v'],i_depths=[0],i_times=None):
     '''Connects to the CMEMS FTP server and downloads full netcdf files from the FTP with either daily or monthly resolution.
     Full netcdf files are stored temporarily on a local drive before requested variables and depth layers are extracted. If this
     is successful, the temporary full netcdf file is then removed. If the connection to the FTP server breaks during execution,

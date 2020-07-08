@@ -22,6 +22,18 @@
         "salinity": "so",
         "mld": "mlotst",
         "sea_ice_cover": "siconc",
-        "o2": "o2"
+        "o2": "o2",
+        "u_stokes": "VSDX",
+        "v_stokes": "VSDY",
+        "Hs": "VHM0",
+        "Hs_dir": "VMDR",
+        "Tp": "VTPK",
+        "Tm": "VTM10",
+        "Hs_sea": "VHM0_WW",
+        "Hs_sea_dir": "VMDR_WW",
+        "Tm_sea": "VTM01_WW",
+        "Hs_swell": "VHM0_SW1",
+        "Hs_swell_dir": "VMDR_SW1",
+        "Tm_swell": "VTM01_SW1"
     }
 }

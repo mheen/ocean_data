@@ -29,6 +29,9 @@ class Quantity4D(Quantity):
         super().__init__(name,values,units)
         self.dimensions = ('time','depth','lat','lon')
 
+def create_depth_dimension(value=0,units='m'):
+    return Dimension('depth',np.array([value]),units)
+
 def netcdf_to_dimension(netcdf: Dataset, variable_name: str, new_name=None, i_use=None) -> Dimension:
     i_use = _all_slice_if_none(i_use)
     values = netcdf[variable_name][i_use].filled(fill_value=np.nan)
@@ -95,7 +98,19 @@ class ModelData:
         o2=None,
         air_u=None,
         air_v=None,
-        air_temp=None):
+        air_temp=None,
+        u_stokes=None,
+        v_stokes=None,
+        Hs=None,
+        Hs_dir=None,
+        Tp=None,
+        Tm=None,
+        Hs_sea=None,
+        Hs_sea_dir=None,
+        Tm_sea=None,
+        Hs_swell=None,
+        Hs_swell_dir=None,
+        Tm_swell=None):
         self.time = time
         self.depth = depth
         self.lat = lat
@@ -112,6 +127,18 @@ class ModelData:
         self.air_u = air_u
         self.air_v = air_v
         self.air_temp = air_temp
+        self.u_stokes = u_stokes
+        self.v_stokes = v_stokes
+        self.Hs = Hs
+        self.Hs_dir = Hs_dir
+        self.Tp = Tp
+        self.Tm = Tm
+        self.Hs_sea = Hs_sea
+        self.Hs_sea_dir = Hs_sea_dir
+        self.Tm_sea = Tm_sea
+        self.Hs_swell = Hs_swell
+        self.Hs_swell_dir = Hs_swell_dir
+        self.Tm_swell = Tm_swell
 
     def fill_variable(self,variable_name,variable):
         if hasattr(self,variable_name):
@@ -178,11 +205,14 @@ class ModelData:
         return output_path
         
 def from_downloaded(netcdf : Dataset, variables : list, model_name : str,
-                    i_times=None, i_depths=None, i_lats=None, i_lons=None) -> ModelData:
+                    i_times=None, i_depths=None, i_lats=None, i_lons=None, depth_value=None) -> ModelData:
     time_name = get_variable_name(model_name,'time')
     time = netcdf_to_dimension(netcdf,time_name,new_name='time',i_use=i_times)
     depth_name = get_variable_name(model_name,'depth')
-    depth = netcdf_to_dimension(netcdf,depth_name,new_name='depth',i_use=i_depths)
+    if depth_name in netcdf.dimensions.keys():
+        depth = netcdf_to_dimension(netcdf,depth_name,new_name='depth',i_use=i_depths)
+    else:
+        depth = create_depth_dimension(value=depth_value)
     lat_name = get_variable_name(model_name,'lat')
     lat = netcdf_to_dimension(netcdf,lat_name,new_name='lat',i_use=None)
     lon_name = get_variable_name(model_name,'lon')
@@ -196,10 +226,13 @@ def from_downloaded(netcdf : Dataset, variables : list, model_name : str,
     return modeldata
 
 def from_local_file(input_path : str, variables=None,
-                    i_times=None, i_depths=None, i_lats=None, i_lons=None) -> ModelData:
+                    i_times=None, i_depths=None, i_lats=None, i_lons=None, depth_value=None) -> ModelData:
     netcdf = Dataset(input_path)
     time = netcdf_to_dimension(netcdf,'time',i_times)
-    depth = netcdf_to_dimension(netcdf,'depth',i_depths)
+    if 'depth' in netcdf.dimensions.keys():
+        depth = netcdf_to_dimension(netcdf,'depth',i_depths)
+    else:
+        depth = create_depth_dimension(value=depth_value)
     lat = netcdf_to_dimension(netcdf,'lat',i_lats)
     lon = netcdf_to_dimension(netcdf,'lon',i_lons)
     modeldata = ModelData(time,depth,lat,lon)
