@@ -64,7 +64,7 @@ def _dl_monthly(ftp,output_dir,start_date,end_date,log_file,variables,i_depths,i
         ftp.cwd(str(year)+'/')
         log.info(log_file,f'Changed FTP working dir to: {ftp.pwd()}')
         filenames = ftp.nlst()        
-        _dl_file(ftp,filenames,output_dir,log_file,variables,i_depths,i_times)
+        _dl_file(ftp,filenames,output_dir,log_file,variables,i_depths,i_times,filename_format='%Y%m')
         ftp.cwd('../')
 
 def _dl_daily(ftp,output_dir,start_date,end_date,log_file,variables,i_depths,i_times):
@@ -81,7 +81,7 @@ def _dl_daily(ftp,output_dir,start_date,end_date,log_file,variables,i_depths,i_t
         _dl_file(ftp,filenames,output_dir,log_file,variables,i_depths,i_times)
         ftp.cwd('../../')
 
-def _dl_file(ftp,filenames,output_dir,log_file,variables,i_depths,i_times):
+def _dl_file(ftp,filenames,output_dir,log_file,variables,i_depths,i_times,filename_format='%Y%m%d'):
     for filename in filenames:
         # download full file to temporary directory
         temp_output_dir = output_dir+'temp/'
@@ -90,6 +90,20 @@ def _dl_file(ftp,filenames,output_dir,log_file,variables,i_depths,i_times):
         temp_output_path = temp_output_dir+filename        
         try:
             if not os.path.exists(temp_output_path):
+                # skip download of temp file if permanent file already exists
+                if filename_format == '%Y%m':
+                    output_path = output_dir+filename[-9:]
+                elif filename_format == '%Y%m%d':
+                    output_path = output_dir+filename[-11:]
+                else:
+                    raise ValueError('Unknown filename format. Valid options are "%Y%m" and "%Y%m%d".')
+                if os.path.exists(output_path):
+                    err_message = _check_permanent_netcdf(output_path)
+                    if err_message:
+                        log.error(log_file,err_message)
+                        continue
+                    log.info(log_file,f'Permanent file already exists, skipping: {output_path}')
+                    continue
                 log.info(log_file,f'Downloading temp file: {filename}')
                 filehandle = open(temp_output_path,'wb')
                 ftp.retrbinary('RETR %s' % filename,filehandle.write)
@@ -102,12 +116,21 @@ def _dl_file(ftp,filenames,output_dir,log_file,variables,i_depths,i_times):
             log.error(log_file, str(e), e)
             continue
         if os.path.exists(temp_output_path):
-            log.info(log_file, f'File {temp_output_path} already exists, skipping download.')
+            log.info(log_file, f'File already exists, skipping download: {temp_output_path}')
             # save requested variables and depth levels and remove temporary full file            
             netcdf = Dataset(temp_output_path)
             cmemsdata = modeldata_from_downloaded(netcdf,variables,'cmems',i_times=i_times,i_depths=i_depths)
-            output_path = cmemsdata.write_to_netcdf(output_dir)
-            log.info(log_file,f'Saved permanent requested file: {output_path}')
+            output_path = cmemsdata.get_output_path(output_dir,filename_format=filename_format)
+            if os.path.exists(output_path):
+                err_message = _check_permanent_netcdf(output_path)
+                if err_message:
+                    log.error(log_file,err_message)
+                    continue
+                log.info(log_file,f'Permanent file already exists, skipping: {output_path}')
+                netcdf.close()
+                continue
+            log.info(log_file,f'Saving permanent requested file: {output_path}')
+            _ = cmemsdata.write_to_netcdf(output_dir,filename_format=filename_format)
             err_message = _check_permanent_netcdf(output_path)
             if err_message:
                 log.error(log_file,err_message)
@@ -124,13 +147,13 @@ def _check_permanent_netcdf(input_path:str) -> str:
     # 2. check if netcdf file contains bytes
     if not os.stat(input_path).st_size > 100:
         return f'File contains no bytes: {input_path}'
-    # 3. check if time in netcdf file matches time string in filename
-    filename,_ = os.path.splitext(os.path.basename(input_path))
-    filename_time = datetime.strptime(filename,'%Y%m%d')
-    netcdf = Dataset(input_path)
-    nc_time = convert_time_to_datetime(netcdf['time'],netcdf['time'].units)
-    if not filename_time.date() == nc_time[0].date():
-        return f'Time in netcdf file does not match name of netcdf file: {input_path}'
+    # # 3. check if time in netcdf file matches time string in filename
+    # filename,_ = os.path.splitext(os.path.basename(input_path))
+    # filename_time = datetime.strptime(filename,'%Y%m%d')
+    # netcdf = Dataset(input_path)
+    # nc_time = convert_time_to_datetime(netcdf['time'],netcdf['time'].units)
+    # if not filename_time.date() == nc_time[0].date():
+    #     return f'Time in netcdf file does not match name of netcdf file: {input_path}'
     # return None if all checks passed
     return None
 
