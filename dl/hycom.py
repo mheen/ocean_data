@@ -1,4 +1,4 @@
-from dataclass import from_downloaded as modeldata_from_downloaded
+from modeldata import from_downloaded as modeldata_from_downloaded
 import log as log
 from utilities import convert_time_to_datetime,convert_datetime_to_time
 from utilities import get_time_indices,get_variable_name

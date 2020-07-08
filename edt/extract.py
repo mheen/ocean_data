@@ -1,4 +1,4 @@
-from dataclass import from_downloaded as modeldata_from_downloaded
+from modeldata import from_downloaded as modeldata_from_downloaded
 import log
 from utilities import get_ncfiles_in_dir,get_variable_name,get_variable_name_reverse
 from utilities import convert_time_to_datetime,get_n_months,get_l_time_range,add_month_to_timestamp

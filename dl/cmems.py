@@ -1,4 +1,4 @@
-from dataclass import from_downloaded as modeldata_from_downloaded
+from modeldata import from_downloaded as modeldata_from_downloaded
 import log
 from utilities import get_ncfiles_in_dir
 from utilities import get_urls,get_logins

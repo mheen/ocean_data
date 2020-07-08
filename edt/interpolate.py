@@ -1,6 +1,6 @@
 from utilities import get_ncfiles_in_dir
-from dataclass import ModelData, Dimension, Quantity3D, Quantity4D
-from dataclass import from_local_file as modeldata_from_local_file
+from modeldata import ModelData, Dimension, Quantity3D, Quantity4D
+from modeldata import from_local_file as modeldata_from_local_file
 import numpy as np
 from scipy.interpolate import RegularGridInterpolator
 import os
