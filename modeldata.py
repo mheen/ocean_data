@@ -110,7 +110,10 @@ class ModelData:
         Tm_sea=None,
         Hs_swell=None,
         Hs_swell_dir=None,
-        Tm_swell=None):
+        Tm_swell=None,
+        u10=None,
+        v10=None,
+        temp2m=None):
         self.time = time
         self.depth = depth
         self.lat = lat
@@ -139,6 +142,9 @@ class ModelData:
         self.Hs_swell = Hs_swell
         self.Hs_swell_dir = Hs_swell_dir
         self.Tm_swell = Tm_swell
+        self.u10 = u10
+        self.v10 = v10
+        self.temp2m = temp2m
 
     def fill_variable(self,variable_name,variable):
         if hasattr(self,variable_name):

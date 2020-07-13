@@ -35,5 +35,14 @@
         "Hs_swell": "VHM0_SW1",
         "Hs_swell_dir": "VMDR_SW1",
         "Tm_swell": "VTM01_SW1"
+    },
+    "ecmwf": {
+        "depth": "height",
+        "time": "time",
+        "lat": "latitude",
+        "lon": "longitude",
+        "u10": "u10",
+        "v10": "v10",
+        "temp2m": "t2m"
     }
 }

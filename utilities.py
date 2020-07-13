@@ -17,6 +17,11 @@ def get_variable_name(model,variable,json_file='input/variables.json'):
         model = all_models[model]
     return model[variable]
 
+def get_ecmwf_variable_code(variable,json_file='input/ecmwf_codes.json'):
+    with open(json_file,'r') as f:
+        all_codes = json.load(f)
+    return all_codes[variable]
+
 def get_variable_name_reverse(model,variable,json_file='input/variables.json'):
     with open(json_file,'r') as f:
         all_models = json.load(f)
@@ -43,14 +48,14 @@ def get_ncfiles_in_dir(input_dir):
             ncfiles.append(filename)
     return ncfiles
 
-def get_daily_ncfiles_in_time_range(input_dir,start_date,end_date):
+def get_ncfiles_in_time_range(input_dir,start_date,end_date,timeformat='%Y%m%d'):
         all_ncfiles = get_ncfiles_in_dir(input_dir)
         ndays = (end_date-start_date).days+1
         ncfiles = []
         for n in range(ndays):
             date = start_date+timedelta(days=n)
             for ncfile in all_ncfiles:
-                if ncfile.startswith(date.strftime('%Y%m%d')):
+                if ncfile.startswith(date.strftime(timeformat)):
                     ncfiles.append(ncfile)
         return ncfiles
 
