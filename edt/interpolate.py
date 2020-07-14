@@ -31,27 +31,46 @@ def horizontally(modeldata : ModelData, lat_interp : np.ndarray, lon_interp : np
     lat_interp2d = lat_interp2d.transpose()
     lon_interp2d = lon_interp2d.transpose()
     variable_names = modeldata.get_variable_names()
+    if modeldata.lon.values[0] > -179.5:
+        lon = np.insert(modeldata.lon.values,0,-modeldata.lon.values[-1])        
+        boundary = 'periodic'
+    else:
+        lon = modeldata.lon.values
+        boundary = None
     for variable_name in variable_names:
         variable = getattr(modeldata,variable_name)
-        variable_interp = _horizontally_interpolate_quantity(modeldata.lat.values,modeldata.lon.values,
-                                           lat_interp2d,lon_interp2d,variable,method=method)
+        variable_interp = _horizontally_interpolate_quantity(modeldata.lat.values,lon,
+                                           lat_interp2d,lon_interp2d,variable,method=method,boundary=boundary)
         modeldata_interp.fill_variable(variable_name,variable_interp)
     return modeldata_interp
 
-def _horizontally_interpolate_quantity(lat, lon, lat2, lon2, quantity, method='linear'):
+def _horizontally_interpolate_quantity(lat, lon, lat2, lon2, quantity, method='linear',boundary=None):
     if quantity is None:
         return None
-    quantity_shape = quantity.values.shape
+    if boundary == 'periodic':
+        values = _add_periodic_boundary_to_values(quantity.values,quantity.dimensions)
+    else:
+        values = quantity.values
+    quantity_shape = values.shape
     if len(quantity.dimensions) == 3:
         interp_values = np.empty((quantity_shape[0],lat2.shape[0],lon2.shape[1]))*np.nan
         for t in range(interp_values.shape[0]):
-            f_interp = RegularGridInterpolator((lat,lon),quantity.values[t,:,:],method=method)
+            f_interp = RegularGridInterpolator((lat,lon),values[t,:,:],method=method)
             interp_values[t,:,:] = f_interp((lat2,lon2))
         return Quantity3D(quantity.name,interp_values,quantity.units)
     if len(quantity.dimensions) == 4:
         interp_values = np.empty((quantity_shape[0],quantity_shape[1],lat2.shape[0],lon2.shape[1]))*np.nan
         for t in range(interp_values.shape[0]):
             for d in range(interp_values.shape[1]):
-                f_interp = RegularGridInterpolator((lat,lon),quantity.values[t,d,:,:],method=method)
+                f_interp = RegularGridInterpolator((lat,lon),values[t,d,:,:],method=method)
                 interp_values[t,d,:,:] = f_interp((lat2,lon2))
         return Quantity4D(quantity.name,interp_values,quantity.units)
+
+def _add_periodic_boundary_to_values(values,dimensions):
+    if len(dimensions) == 3:
+        insert_values = values[:,:,-1]
+        values_periodic = np.insert(values,0,insert_values,axis=2)
+    if len(dimensions) == 4:
+        insert_values = values[:,:,:,-1]
+        values_periodic = np.insert(values,0,insert_values,axis=3)
+    return values_periodic    

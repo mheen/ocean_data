@@ -30,6 +30,8 @@ def ecmwfserver(output_dir,variables,start_date,end_date,
         netcdf = Dataset(temp_output_path)
         modeldata = from_downloaded(netcdf,variables,'ecmwf',depth_value=-10.)
         log.info(log_file,f'Saving permanent requested file: {output_path}')
+        modeldata.convert_lon360_to_lon180()
+        modeldata.sort_lat_ascending()
         modeldata.write_to_netcdf(output_dir,filename_format=filename_format)
         log.info(log_file,f'Removing temp file: {temp_output_path}')
         os.remove(temp_output_path)

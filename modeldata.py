@@ -1,4 +1,4 @@
-from utilities import get_variable_name,convert_time_to_datetime
+from utilities import get_variable_name,convert_time_to_datetime, convert_lon_360_to_180
 from netCDF4 import Dataset
 import numpy as np
 import matplotlib.pyplot as plt
@@ -151,6 +151,35 @@ class ModelData:
             setattr(self,variable_name,variable)
         else:
             raise ValueError(f'ModelData does not have {variable_name} attribute, failed to fill variable.')
+
+    def convert_lon360_to_lon180(self):
+        if self.lon.values.min() >= 0:
+            self.lon.values,i_lon = convert_lon_360_to_180(self.lon.values)
+            variable_names = self.get_variable_names()
+            for variable_name in variable_names:
+                variable = getattr(self,variable_name)
+                if variable is None:
+                    continue
+                if len(variable.dimensions) == 3:
+                    variable.values = variable.values[:,:,i_lon]
+                if len(variable.dimensions) == 4:
+                    variable.values = variable.values[:,:,:,i_lon]
+                setattr(self,variable_name,variable)
+
+    def sort_lat_ascending(self):
+        if self.lat.values[0] > self.lat.values[-1]:
+            i_lat = np.argsort(self.lat.values)
+            self.lat.values = self.lat.values[i_lat]
+            variable_names = self.get_variable_names()
+            for variable_name in variable_names:
+                variable = getattr(self,variable_name)
+                if variable is None:
+                    continue
+                if len(variable.dimensions) == 3:
+                    variable.values = variable.values[:,i_lat,:]
+                if len(variable.dimensions) == 4:
+                    variable.values = variable.values[:,:,i_lat,:]
+                setattr(self,variable_name,variable)
 
     def plot_variable(self,variable_name,i_time=0,i_depth=0):
         variable = getattr(self,variable_name)

@@ -179,5 +179,8 @@ def convert_datetime_to_time(time_org,time_units='seconds',time_origin=datetime(
 # Coordinates
 # -----------------------------------------------
 def convert_lon_360_to_180(lon):
-    lon[lon>180] = lon[lon>180]-360
-    return lon
+    lon180 = np.copy(lon)
+    lon180[lon180>180] = lon180[lon180>180]-360
+    i_lon = np.argsort(lon180)
+    lon180 = lon180[i_lon]
+    return lon180,i_lon
