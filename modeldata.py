@@ -2,7 +2,9 @@ from utilities import get_variable_name,convert_time_to_datetime, convert_lon_36
 from netCDF4 import Dataset
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import cartopy.crs as ccrs
+import cartopy.mpl.ticker as cticker
 
 class Dimension:
     def __init__(self, name: str, values: np.ndarray, units: str):
@@ -96,9 +98,6 @@ class ModelData:
         mld=None,
         sea_ice_cover=None,
         o2=None,
-        air_u=None,
-        air_v=None,
-        air_temp=None,
         u_stokes=None,
         v_stokes=None,
         Hs=None,
@@ -126,10 +125,7 @@ class ModelData:
         self.ssh = ssh
         self.mld = mld
         self.sea_ice_cover = sea_ice_cover
-        self.o2 = o2
-        self.air_u = air_u
-        self.air_v = air_v
-        self.air_temp = air_temp
+        self.o2 = o2        
         self.u_stokes = u_stokes
         self.v_stokes = v_stokes
         self.Hs = Hs
@@ -181,7 +177,7 @@ class ModelData:
                     variable.values = variable.values[:,:,i_lat,:]
                 setattr(self,variable_name,variable)
 
-    def plot_variable(self,variable_name,i_time=0,i_depth=0):
+    def plot_variable(self,variable_name,i_time=0,i_depth=0,output_path=None):
         variable = getattr(self,variable_name)
         if variable is None:
             raise ValueError(f'Requested variable {variable_name} to plot is empty in ModelData.')
@@ -189,11 +185,29 @@ class ModelData:
             plot_values = variable.values[i_time,:,:]
         if len(variable.dimensions) == 4:
             plot_values = variable.values[i_time,i_depth,:,:]
-        fig = plt.figure(figsize=(6,4))
+        mpl.rc('font',family='arial')
+        fig = plt.figure(figsize=(12,8))
         ax = plt.gca(projection=ccrs.PlateCarree())
         c = ax.contourf(self.lon.values,self.lat.values,plot_values,transform=ccrs.PlateCarree())
         ax.coastlines()
-        cbar = fig.colorbar(c,label=f'{variable.name} [{variable.units}]')
+        # colorbar
+        pos = ax.get_position()
+        cbax = fig.add_axes([pos.x0+pos.width+0.01,pos.y0,0.02,pos.height])
+        cbar = fig.colorbar(c,label=f'{variable.name} [{variable.units}]',cax=cbax)
+        # grid
+        parallels = np.arange(-80,90,20)
+        meridians = np.arange(-180,190,60)
+        lon_formatter = cticker.LongitudeFormatter()
+        lat_formatter = cticker.LatitudeFormatter()
+        ax.set_xticks(meridians,crs=ccrs.PlateCarree())
+        ax.set_xticklabels(meridians)
+        ax.xaxis.set_major_formatter(lon_formatter)
+        ax.set_yticks(parallels,crs=ccrs.PlateCarree())
+        ax.set_yticklabels(parallels)
+        ax.yaxis.set_major_formatter(lat_formatter)        
+        ax.set_frame_on(True)
+        if output_path is not None:
+            plt.savefig(output_path,bbox_inches='tight',dpi=300)
         plt.show()
 
     def get_variable_names(self):
