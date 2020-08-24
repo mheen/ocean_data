@@ -37,7 +37,15 @@ def create_depth_dimension(value=0,units='m'):
 def netcdf_to_dimension(netcdf: Dataset, variable_name: str, new_name=None, i_use=None) -> Dimension:
     i_use = _all_slice_if_none(i_use)
     values = netcdf[variable_name][i_use].filled(fill_value=np.nan)
-    units = netcdf[variable_name].units
+    if len(values.shape) == 2:
+        if len(np.unique(np.round(np.diff(values[0,:]),3))) == 1:
+            values = values[:,0]
+        elif len(np.unique(np.round(np.diff(values[:,0]),3))) == 1:
+            values = values[0,:]
+    try:
+        units = netcdf[variable_name].units
+    except:
+        units = ''
     new_name = _new_name_is_variable_name_if_none(new_name,variable_name)
     return Dimension(new_name,values,units)
 

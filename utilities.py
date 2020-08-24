@@ -68,6 +68,14 @@ def get_closest_index(A,target):
     idx -= target-left < right-target
     return idx
 
+def rename_ncfiles_in_dir(input_dir: str, filename_indices: list, filename_format: str, new_filename_format: str):
+    ncfiles = get_ncfiles_in_dir(input_dir)
+    for ncfile in ncfiles:
+        input_path = input_dir+ncfile
+        ncfile_date = datetime.strptime(ncfile[filename_indices[0]:filename_indices[1]],filename_format)
+        output_path = input_dir+ncfile_date.strftime(new_filename_format)+'.nc'
+        os.rename(input_path,output_path)        
+
 # -----------------------------------------------
 # Timeseries
 # -----------------------------------------------

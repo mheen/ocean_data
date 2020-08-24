@@ -44,5 +44,17 @@
         "u10": "u10",
         "v10": "v10",
         "temp2m": "t2m"
+    },
+    "roms": {
+        "depth": "s_rho",
+        "lat": "lat_rho",
+        "lon": "lon_rho",
+        "time": "ocean_time",
+        "u": "u_eastward",
+        "v": "v_northward",
+        "temp": "temp",
+        "salinity": "salt",
+        "ssh": "zeta",
+        "h": "h"
     }
 }
