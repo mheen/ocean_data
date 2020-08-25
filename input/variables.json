@@ -7,7 +7,7 @@
         "tau": "tau",
         "u": "water_u",
         "v": "water_v",
-        "temp": "water_temp",
+        "sst": "water_temp",
         "salinity": "salinity",
         "ssh": "surf_el"
     },
@@ -18,7 +18,7 @@
         "time": "time",
         "u": "uo",
         "v": "vo",
-        "temp": "thetao",
+        "sst": "thetao",
         "salinity": "so",
         "mld": "mlotst",
         "sea_ice_cover": "siconc",
@@ -52,9 +52,16 @@
         "time": "ocean_time",
         "u": "u_eastward",
         "v": "v_northward",
-        "temp": "temp",
+        "sst": "temp",
         "salinity": "salt",
         "ssh": "zeta",
         "h": "h"
+    },
+    "modis-aqua": {
+        "lat": "lat",
+        "lon": "lon",
+        "time": "time",
+        "depth": "depth",
+        "sst": "sst"
     }
 }

@@ -1,6 +1,8 @@
 from datetime import datetime,timedelta
 import numpy as np
 import json
+from urllib.request import urlopen
+from html.parser import HTMLParser
 import os
 
 # -----------------------------------------------
@@ -169,7 +171,7 @@ def convert_time_to_datetime(time_org,time_units):
     else:
         raise ValueError('Unknown time units for time conversion to datetime.')
 
-def convert_datetime_to_time(time_org,time_units='seconds',time_origin=datetime(1995,1,1,12,0)):
+def convert_datetime_to_time(time_org,time_units='seconds',time_origin=datetime(1995,1,1)):
     time = []
     if time_units == 'seconds':
         conversion = 1
@@ -181,7 +183,8 @@ def convert_datetime_to_time(time_org,time_units='seconds',time_origin=datetime(
         raise ValueError('Unknown time units requested fro time conversion from datetime.')
     for t in time_org:        
         time.append((t-time_origin).total_seconds()/conversion)
-    return np.array(time)
+    units = f'{time_units} since {time_origin.strftime("%Y-%m-%d %H:%M")}'
+    return np.array(time),units
 
 # -----------------------------------------------
 # Coordinates
@@ -192,3 +195,31 @@ def convert_lon_360_to_180(lon):
     i_lon = np.argsort(lon180)
     lon180 = lon180[i_lon]
     return lon180,i_lon
+
+# -----------------------------------------------
+# OpenDAP
+# -----------------------------------------------
+def get_ncfiles_from_opendap_catalog(catalog_url):
+    catalog_content = download_html(catalog_url)
+    parsed_html = parse_html(catalog_content)
+    ncfiles = []
+    for line in parsed_html:
+        if line.endswith('.nc'):
+            ncfiles.append(line)
+    return ncfiles
+
+def download_html(url):
+    catalog_response = urlopen(url)
+    return catalog_response.read().decode('UTF-8')
+
+def parse_html(html_text):
+    parsed_catalog = OpendapHtmlParser()
+    parsed_catalog.feed(html_text)
+    return parsed_catalog.data
+
+class OpendapHtmlParser(HTMLParser):
+    def __init__(self):
+        HTMLParser.__init__(self)
+        self.data = []
+    def handle_data(self,data):
+        self.data.append(data)

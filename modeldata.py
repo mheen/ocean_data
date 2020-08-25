@@ -34,6 +34,9 @@ class Quantity4D(Quantity):
 def create_depth_dimension(value=0,units='m'):
     return Dimension('depth',np.array([value]),units)
 
+def create_time_dimension(values,units):
+    return Dimension('time',values,units)
+
 def netcdf_to_dimension(netcdf: Dataset, variable_name: str, new_name=None, i_use=None) -> Dimension:
     i_use = _all_slice_if_none(i_use)
     values = netcdf[variable_name][i_use].filled(fill_value=np.nan)
@@ -53,7 +56,8 @@ def netcdf_to_dimension(netcdf: Dataset, variable_name: str, new_name=None, i_us
 
 def netcdf_to_quantity(netcdf: Dataset, variable_name: str, new_name=None,
                        i_times=None, i_depths=None, i_lats=None, i_lons=None):
-    if len(netcdf[variable_name].shape) == 3:
+    if len(netcdf[variable_name].shape) == 2 or len(netcdf[variable_name].shape) == 3:
+        # (if 2D: expand to include time dimension)
         return netcfd_to_quantity3D(netcdf,variable_name,new_name=new_name,
                                     i_times=i_times,i_lats=i_lats,i_lons=i_lons)
     if len(netcdf[variable_name].shape) == 4:
@@ -61,13 +65,18 @@ def netcdf_to_quantity(netcdf: Dataset, variable_name: str, new_name=None,
                                     i_times=i_times,i_depths=i_depths,
                                     i_lats=i_lats,i_lons=i_lons)
 
-def netcfd_to_quantity3D(netcfd: Dataset, variable_name: str, new_name=None,
+def netcfd_to_quantity3D(netcdf: Dataset, variable_name: str, new_name=None,
                          i_times=None, i_lats=None, i_lons=None) -> Quantity3D:
     i_times = _all_slice_if_none(i_times)
     i_lats = _all_slice_if_none(i_lats)
     i_lons = _all_slice_if_none(i_lons)
-    values = netcfd[variable_name][i_times,i_lats,i_lons].filled(fill_value=np.nan)
-    units = netcfd[variable_name].units
+    if len(netcdf[variable_name].shape) == 2:
+        values_all = netcdf[variable_name][:].filled(fill_value=np.nan)
+        values_all = np.expand_dims(values_all,0)
+        values = values_all[i_times,i_lats,i_lons]
+    else:
+        values = netcdf[variable_name][i_times,i_lats,i_lons].filled(fill_value=np.nan)
+    units = netcdf[variable_name].units
     new_name = _new_name_is_variable_name_if_none(new_name,variable_name)
     return Quantity3D(new_name,values,units)
 
@@ -102,7 +111,7 @@ class ModelData:
         u=None,
         v=None,
         w=None,
-        temp=None,
+        sst=None,
         salinity=None,
         ssh=None,
         mld=None,
@@ -130,7 +139,7 @@ class ModelData:
         self.u = u
         self.v = v
         self.w = w
-        self.temp = temp
+        self.sst = sst
         self.salinity = salinity
         self.ssh = ssh
         self.mld = mld
@@ -262,11 +271,15 @@ class ModelData:
             nc_var = None
         nc.close()
         return output_path
-        
+
 def from_downloaded(netcdf : Dataset, variables : list, model_name : str,
-                    i_times=None, i_depths=None, i_lats=None, i_lons=None, depth_value=None) -> ModelData:
+                    i_times=None, i_depths=None, i_lats=None, i_lons=None, depth_value=None,
+                    time_values=None, time_units=None) -> ModelData:
     time_name = get_variable_name(model_name,'time')
-    time = netcdf_to_dimension(netcdf,time_name,new_name='time',i_use=i_times)
+    if time_name in netcdf.dimensions.keys():
+        time = netcdf_to_dimension(netcdf,time_name,new_name='time',i_use=i_times)
+    else:
+        time = create_time_dimension(time_values,time_units)
     depth_name = get_variable_name(model_name,'depth')
     if depth_name in netcdf.dimensions.keys():
         depth = netcdf_to_dimension(netcdf,depth_name,new_name='depth',i_use=i_depths)
