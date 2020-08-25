@@ -38,9 +38,11 @@ def netcdf_to_dimension(netcdf: Dataset, variable_name: str, new_name=None, i_us
     i_use = _all_slice_if_none(i_use)
     values = netcdf[variable_name][i_use].filled(fill_value=np.nan)
     if len(values.shape) == 2:
-        if len(np.unique(np.round(np.diff(values[0,:]),3))) == 1:
+        unique_di = np.unique(np.round(np.diff(values[:,0]),3))
+        unique_dj = np.unique(np.round(np.diff(values[0,:]),3))
+        if len(dj) == 1 and unique_dj[0] == 0:
             values = values[:,0]
-        elif len(np.unique(np.round(np.diff(values[:,0]),3))) == 1:
+        elif len(di) == 1 and unique_di[0] == 0:
             values = values[0,:]
     try:
         units = netcdf[variable_name].units
