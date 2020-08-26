@@ -117,6 +117,8 @@ class ModelData:
         mld=None,
         sea_ice_cover=None,
         o2=None,
+        chl_a=None,
+        turbidity=None,
         u_stokes=None,
         v_stokes=None,
         Hs=None,
@@ -144,7 +146,9 @@ class ModelData:
         self.ssh = ssh
         self.mld = mld
         self.sea_ice_cover = sea_ice_cover
-        self.o2 = o2        
+        self.o2 = o2
+        self.chl_a = chl_a
+        self.turbidity = turbidity
         self.u_stokes = u_stokes
         self.v_stokes = v_stokes
         self.Hs = Hs

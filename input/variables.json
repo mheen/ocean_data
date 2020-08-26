@@ -62,6 +62,8 @@
         "lon": "lon",
         "time": "time",
         "depth": "depth",
-        "sst": "sst"
+        "sst": "sst",
+        "chl_a": "chlor_a",
+        "turbidity": "Kd_490"
     }
 }
