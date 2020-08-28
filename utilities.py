@@ -61,6 +61,13 @@ def get_ncfiles_in_time_range(input_dir,start_date,end_date,timeformat='%Y%m%d')
                     ncfiles.append(ncfile)
         return ncfiles
 
+def get_start_and_end_indices(array,start_value,end_value):    
+    l_indices = np.logical_and(array>=start_value,array<=end_value)
+    indices = np.where(l_indices)[0]
+    start_index = indices[0]
+    end_index = indices[-1]
+    return (start_index,end_index)
+
 def get_closest_index(A,target):
     # A must be sorted!
     idx = A.searchsorted(target)

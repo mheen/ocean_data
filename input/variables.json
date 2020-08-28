@@ -45,7 +45,7 @@
         "v10": "v10",
         "temp2m": "t2m"
     },
-    "roms": {
+    "ozroms": {
         "depth": "s_rho",
         "lat": "lat_rho",
         "lon": "lon_rho",
