@@ -46,8 +46,7 @@ def opendap_server_monthly(output_dir, main_data_url, start_year, end_year, log_
             else:
                 raise ValueError(
                     'Unknown variable requested for MODIS-Aqua download. Valid options are: sst, chl_a, turbidity.')
-            ncfiles = [
-                ncfile for ncfile in all_ncfiles if variable_string in ncfile]
+            ncfiles = [ncfile for ncfile in all_ncfiles if variable_string in ncfile]
             for ncfile in ncfiles:
                 input_path = input_dir+ncfile
                 log.info(
