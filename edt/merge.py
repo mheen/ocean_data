@@ -8,6 +8,26 @@ from datetime import datetime
 import numpy as np
 import os
 
+def merge_netcdfs_in_folder_to_single_file(input_dir,output_path,variables=['u','v'],velocities=None,log_file=None):
+    ncfiles = get_ncfiles_in_dir(input_dir)
+    log.info(log_file,f'Loading data {input_dir}{ncfiles[0]}')
+    modeldata = from_local_file(input_dir+ncfiles[0],variables=variables)
+    for ncfile in ncfiles[1:]:
+        netcdf = Dataset(input_dir+ncfile)        
+        for variable_name in variables:
+            log.info(log_file,f'Appending {variable_name} data from {input_dir+ncfile}')
+            modeldata.append_to_variable(variable_name,netcdf[variable_name][:].filled(fill_value=np.nan))
+        log.info(log_file,f'Appending time data from {input_dir+ncfile}')
+        modeldata.append_to_time(netcdf['time'][:].filled(fill_value=np.nan))
+        netcdf.close()
+    if velocities == 'currents':
+        log.info(log_file,f'Adding absolute current velocity')
+        modeldata.add_absolute_current_velocity()
+    elif velocities == 'wind':
+        log.info(log_file,f'Adding absolute wind velocity')
+        modeldata.add_absolute_wind_velocity()    
+    modeldata.write_to_netcdf(None,output_path=output_path)
+
 def merge_variables_into_netcdf(input_dirs,output_dir,timeformat='%Y%m',log_file='edt/merge_netcdfs.log'):
     main_input_dir = input_dirs[0]
     input_dirs = input_dirs[1:]

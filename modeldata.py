@@ -177,7 +177,7 @@ class ModelData:
     def add_absolute_current_velocity(self):
         if self.u and self.v is not None:
             vel_values = np.sqrt(self.u.values**2+self.v.values**2)
-            vel = Quantity('vel',vel_values,self.u.units)
+            vel = Quantity4D('vel',vel_values,self.u.units)
             self.fill_variable('vel',vel)
 
     def add_absolute_wind_velocity(self):
@@ -193,6 +193,28 @@ class ModelData:
             setattr(self,'sst',variable)
         else:
             raise ValueError(f'ModelData does not have {variable_name} attribute, failed to fill variable.')
+
+    def append_to_time(self,time_values):
+        if self.time is not None:
+            values = np.append(self.time.values,time_values)
+        else:
+            values = self.time.values
+        time = Dimension('time',values,self.time.units)
+        self.time = time
+
+    def append_to_variable(self,variable_name,variable_values):
+        if hasattr(self,variable_name):            
+            if getattr(self,variable_name) is not None:
+                values = np.append(getattr(self,variable_name).values,variable_values,axis=0)
+            else:
+                values = variable_values
+            if len(getattr(self,variable_name).dimensions) == 3:
+                variable = Quantity3D(variable_name,values,getattr(self,variable_name).units)
+            elif len(getattr(self,variable_name).dimensions) == 4:
+                variable = Quantity4D(variable_name,values,getattr(self,variable_name).units)
+            setattr(self,variable_name,variable)
+        else:
+            raise ValueError(f'ModelData does not have {variable_name} attribute, failed to append to variable.')
 
     def convert_lon360_to_lon180(self):
         if self.lon.values.min() >= 0:
@@ -265,8 +287,9 @@ class ModelData:
         output_path = output_dir+time_string+'.nc'
         return output_path
 
-    def write_to_netcdf(self,output_dir,filename_format='%Y%m%d'):
-        output_path = self.get_output_path(output_dir,filename_format=filename_format)
+    def write_to_netcdf(self,output_dir,output_path=None,filename_format='%Y%m%d'):
+        if output_path is None:
+            output_path = self.get_output_path(output_dir,filename_format=filename_format)
         nc = Dataset(output_path,'w',format='NETCDF4')
         # --- define dimensions ---
         nc.createDimension(self.time.name,self.time.length)
