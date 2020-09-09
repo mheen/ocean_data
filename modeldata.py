@@ -110,6 +110,7 @@ class ModelData:
         lon: Dimension,
         u=None,
         v=None,
+        vel=None,
         w=None,
         sst=None,
         salinity=None,
@@ -133,6 +134,7 @@ class ModelData:
         Tm_swell=None,
         u10=None,
         v10=None,
+        vel10 = None,
         temp2m=None):
         self.time = time
         self.depth = depth
@@ -140,6 +142,7 @@ class ModelData:
         self.lon = lon
         self.u = u
         self.v = v
+        self.vel = vel
         self.w = w
         self.sst = sst
         self.salinity = salinity
@@ -163,11 +166,31 @@ class ModelData:
         self.Tm_swell = Tm_swell
         self.u10 = u10
         self.v10 = v10
+        self.vel10 = vel10
         self.temp2m = temp2m
+
+    def convert_kelvin_to_celsius(self,conversion=-273.15):
+        if self.temp2m is not None and self.temp2m.units == 'K':
+            self.temp2m.values = self.temp2m.values+conversion
+            self.temp2m.units = 'degrees Celsius'
+
+    def add_absolute_current_velocity(self):
+        if self.u and self.v is not None:
+            vel_values = np.sqrt(self.u.values**2+self.v.values**2)
+            vel = Quantity('vel',vel_values,self.u.units)
+            self.fill_variable('vel',vel)
+
+    def add_absolute_wind_velocity(self):
+        if self.u10 and self.v10 is not None:
+            vel10_values = np.sqrt(self.u10.values**2+self.v10.values**2)
+            vel10 = Quantity4D('vel10',vel10_values,self.u10.units)
+            self.fill_variable('vel10',vel10)
 
     def fill_variable(self,variable_name,variable):
         if hasattr(self,variable_name):
             setattr(self,variable_name,variable)
+        elif variable_name == 'temp': # needed for older files because sst was called temp
+            setattr(self,'sst',variable)
         else:
             raise ValueError(f'ModelData does not have {variable_name} attribute, failed to fill variable.')
 
@@ -299,6 +322,9 @@ def from_downloaded(netcdf : Dataset, variables : list, model_name : str,
         variable = netcdf_to_quantity(netcdf,variable_name_model,new_name=variable_name,
                                         i_times=i_times,i_depths=i_depths,i_lats=i_lats,i_lons=i_lons)
         modeldata.fill_variable(variable_name,variable)
+    modeldata.convert_kelvin_to_celsius()
+    modeldata.add_absolute_current_velocity()
+    modeldata.add_absolute_wind_velocity()
     return modeldata
 
 def from_local_file(input_path : str, variables=None,
@@ -319,4 +345,7 @@ def from_local_file(input_path : str, variables=None,
                                         i_times=i_times,i_depths=i_depths,i_lats=i_lats,i_lons=i_lons)
         modeldata.fill_variable(variable_name,variable)
     netcdf.close()
+    modeldata.convert_kelvin_to_celsius()
+    modeldata.add_absolute_current_velocity()
+    modeldata.add_absolute_wind_velocity()
     return modeldata
