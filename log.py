@@ -20,6 +20,7 @@ def _write(log_file, type, message, ex=None):
     if ex:
         log_msg += '\n' + str(traceback.format_exception(etype=type(ex), value=ex, tb=ex.__traceback__))
     print(log_msg)
-    with open(log_file,'a') as f:
-        f.write(log_msg + '\n')
+    if log_file is not None:
+        with open(log_file,'a') as f:
+            f.write(log_msg + '\n')
         
