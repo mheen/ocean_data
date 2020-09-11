@@ -65,5 +65,12 @@
         "sst": "sst",
         "chl_a": "chlor_a",
         "turbidity": "Kd_490"
+    },
+    "ghrsst": {
+        "lat": "lat",
+        "lon": "lon",
+        "time": "time",
+        "depth": "depth",
+        "sst": "analysed_sst"
     }
 }

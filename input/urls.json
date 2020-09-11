@@ -7,5 +7,6 @@
     "cmems_bio_monthly_reanalysis": "Core/GLOBAL_REANALYSIS_BIO_001_029/global-reanalysis-bio-001-029-monthly/",
     "cmems_waves_reanalysis": "Core/GLOBAL_REANALYSIS_WAV_001_032/global-reanalysis-wav-001-032/",
     "nasa_modis_aqua": "https://oceandata.sci.gsfc.nasa.gov/opendap/MODISA/L3SMI/",
-    "nasa_seawifs": "https://oceandata.sci.gsfc.nasa.gov/opendap/SeaWiFS/L3SMI/"
+    "nasa_seawifs": "https://oceandata.sci.gsfc.nasa.gov/opendap/SeaWiFS/L3SMI/",
+    "nasa_ghrsst": "https://podaac-opendap.jpl.nasa.gov/opendap/hyrax/allData/ghrsst/data/GDS2/L4/GLOB/NCEI/AVHRR_OI/v2/"
 }
