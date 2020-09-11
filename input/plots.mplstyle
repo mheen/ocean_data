@@ -1,0 +1,35 @@
+font.family : arial
+font.size : 10
+font.weight : 100
+axes.titlepad : 3
+axes.titlesize : 10
+axes.labelsize : 10
+axes.linewidth : 0.8
+axes.labelweight : 100
+figure.titleweight : 100
+figure.figsize : 12, 8
+axes.grid : True
+grid.color : b0b0b0
+grid.linewidth : 0.5
+axes.labelpad : 2.0
+lines.linewidth : 1
+lines.markersize : 10
+date.autoformatter.month : %m-%Y
+date.autoformatter.day : %d-%m-%Y
+date.autoformatter.hour : %H:%M
+date.autoformatter.minute : %H:%M
+date.autoformatter.second : %H:%M
+date.autoformatter.microsecond : %H:%M
+patch.linewidth : 0.5
+legend.framealpha : 1.0
+legend.fancybox : False
+legend.loc : upper right
+legend.edgecolor : 0.0
+legend.borderaxespad : 0.0
+figure.dpi : 100
+figure.subplot.wspace : 0.1
+figure.subplot.hspace : 0.1
+savefig.format : pdf
+savefig.bbox : tight
+xtick.direction : in
+ytick.direction : in
