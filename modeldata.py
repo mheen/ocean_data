@@ -202,8 +202,22 @@ class ModelData:
         time = Dimension('time',values,self.time.units)
         self.time = time
 
+    def take_time_mean(self):
+        variable_names = self.get_variable_names()
+        for variable_name in variable_names:
+            if getattr(self,variable_name) is None:
+                continue
+            values = np.nanmean(getattr(self,variable_name).values,axis=0)
+            if len(getattr(self,variable_name).dimensions) == 3:
+                variable = Quantity3D(variable_name,values,getattr(self,variable_name).units)
+            elif len(getattr(self,variable_name).dimensions) == 4:
+                variable = Quantity4D(variable_name,values,getattr(self,variable_name).units)
+            setattr(self,variable_name,variable)
+        time = create_time_dimension(np.array([self.time.values[0]]),self.time.units)
+        setattr(self,'time',time)
+
     def append_to_variable(self,variable_name,variable_values):
-        if hasattr(self,variable_name):            
+        if hasattr(self,variable_name):
             if getattr(self,variable_name) is not None:
                 values = np.append(getattr(self,variable_name).values,variable_values,axis=0)
             else:

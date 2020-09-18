@@ -50,9 +50,9 @@ def get_ncfiles_in_dir(input_dir):
             ncfiles.append(filename)
     return ncfiles
 
-def get_ncfiles_in_time_range(input_dir,start_date,end_date,timeformat='%Y%m%d'):
+def get_ncfiles_in_time_range(input_dir,start_date,end_date,including_end=1,timeformat='%Y%m%d'):
         all_ncfiles = get_ncfiles_in_dir(input_dir)
-        ndays = (end_date-start_date).days+1
+        ndays = (end_date-start_date).days+including_end
         ncfiles = []
         for n in range(ndays):
             date = start_date+timedelta(days=n)

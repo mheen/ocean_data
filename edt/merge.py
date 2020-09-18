@@ -51,7 +51,43 @@ def merge_variables_into_netcdf(input_dirs,output_dir,timeformat='%Y%m',log_file
         log.info(log_file,f'Saving merged netcdf to {output_path}')
         _ = modeldata.write_to_netcdf(output_dir,filename_format=timeformat)
 
-def get_monthly_means_from_local_files(model : str, input_dir : str, output_dir : str,
+def get_monthly_means_from_local_daily_files(input_dir : str, output_dir : str,
+                                             input_filenameformat = '%Y%m%d',
+                                             output_filenameformat = '%Y%m',
+                                             log_file='merge_daily_to_monthly.log'):
+    ncfiles = get_ncfiles_in_dir(input_dir)
+    for ncfile in ncfiles:
+        ncfile_datestr,_ = os.path.splitext(ncfile)
+        ncfile_datetime = datetime.strptime(ncfile_datestr,input_filenameformat)
+        output_path = output_dir+ncfile_datetime.strftime(output_filenameformat)+'.nc'
+        if os.path.exists(output_path):
+            log.info(log_file,f'File already exists, skipping: {output_path}')
+            continue
+        log.info(log_file,f'Getting monthly means for {ncfile_datetime.month} {ncfile_datetime.year}')
+        start_date = datetime(ncfile_datetime.year,ncfile_datetime.month,1)
+        if ncfile_datetime.month < 12:
+            end_date = datetime(ncfile_datetime.year,ncfile_datetime.month+1,1)
+            ncfiles_merge = get_ncfiles_in_time_range(input_dir,start_date,end_date,including_end=0)
+        else:
+            end_date = datetime(ncfile_datetime.year,ncfile_datetime.month,31)
+            ncfiles_merge = get_ncfiles_in_time_range(input_dir,start_date,end_date,including_end=1)
+        log.info(log_file,f'Loading data from {input_dir+ncfiles_merge[0]}')
+        modeldata = from_local_file(input_dir+ncfiles_merge[0])
+        for i in range(1,len(ncfiles_merge)):
+            netcdf = Dataset(input_dir+ncfiles_merge[i])
+            variables = list(set(netcdf.variables.keys())-set(['time','depth','lat','lon']))
+            for variable in variables:
+                log.info(log_file,f'Appending data from {input_dir+ncfiles_merge[i]}')
+                variable_values = netcdf[variable][:].filled(fill_value=np.nan)
+                modeldata.append_to_variable(variable,variable_values)
+            netcdf.close()
+        log.info(log_file,f'Getting time mean values')
+        modeldata.take_time_mean()
+        modeldata.get_output_path(output_dir,filename_format=output_filenameformat)
+        log.info(log_file,f'Writing to {output_path}')
+        modeldata.write_to_netcdf(output_dir,filename_format=output_filenameformat)
+
+def get_total_monthly_mean_from_local_files(model : str, input_dir : str, output_dir : str,
                                        filename_format = '%Y%m', variables=None,
                                        i_depths=None, i_lats=None, i_lons=None) -> ModelData:
     ncfiles = get_ncfiles_in_dir(input_dir)
