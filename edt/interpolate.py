@@ -14,6 +14,7 @@ def all_files_in_dir_horizontally(input_dir : str, output_dir : str,
     filenames = get_ncfiles_in_dir(input_dir)
     for filename in filenames:
         modeldata = modeldata_from_local_file(input_dir+filename)
+        modeldata.sort_lat_ascending()
         output_path = modeldata.get_output_path(output_dir)
         if os.path.exists(output_path):
             log.info(log_file,f'File already exists, skipping: {output_path}')
