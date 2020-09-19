@@ -113,6 +113,7 @@ class ModelData:
         vel=None,
         w=None,
         sst=None,
+        sst_satellite=None,
         salinity=None,
         ssh=None,
         mld=None,
@@ -145,6 +146,7 @@ class ModelData:
         self.vel = vel
         self.w = w
         self.sst = sst
+        self.sst_satellite = sst_satellite
         self.salinity = salinity
         self.ssh = ssh
         self.mld = mld
@@ -173,6 +175,9 @@ class ModelData:
         if self.temp2m is not None and self.temp2m.units == 'K':
             self.temp2m.values = self.temp2m.values+conversion
             self.temp2m.units = 'degrees Celsius'
+        if self.sst_satellite is not None and self.sst_satellite.units == 'kelvin':
+            self.sst_satellite.values = self.sst_satellite.values+conversion
+            self.sst_satellite.units = 'degrees Celsius'
 
     def add_absolute_current_velocity(self):
         if self.u and self.v is not None:

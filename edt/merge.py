@@ -38,6 +38,8 @@ def merge_variables_into_netcdf(input_dirs,output_dir,timeformat='%Y%m',log_file
         date0 = modeldata.time.datetime[0].date()
         for input_dir in input_dirs:
             nc_file_add = get_ncfiles_in_time_range(input_dir,date0,date0,timeformat=timeformat)
+            if len(nc_file_add) == 0:
+                continue
             if len(nc_file_add) > 1:
                 raise ValueError(f'More than one netcdf file found in date range {date0.strftime(timeformat)}')
             netcdf = Dataset(input_dir+nc_file_add[0])        
