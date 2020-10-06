@@ -1,6 +1,8 @@
 from modeldata import from_downloaded as modeldata_from_downloaded
 import log as log
-from utilities import get_start_and_end_indices
+from utilities import get_start_and_end_indices, get_urls
+from utilities import get_ncfiles_from_opendap_catalog
+from utilities import get_n_months, add_month_to_timestamp
 from utilities import convert_time_to_datetime, convert_datetime_to_time
 from utilities import get_time_indices, get_variable_name
 from netCDF4 import Dataset
@@ -18,7 +20,20 @@ def get_lat_index_from_netcdf(input_path,lat_range,lat_description='lat'):
     start_index,end_index = get_start_and_end_indices(lat,lat_range[0],lat_range[-1])
     return (start_index,end_index)
 
-def opendap_server(output_dir,input_url,lon_range=None,lat_range=None,variables=['u','v'],i_depths=[0],log_file='dl/ozroms.log'):
+def get_ozroms_monthly_ncfiles(catalog_url,start_date,end_date):
+    all_ncfiles = get_ncfiles_from_opendap_catalog(catalog_url)
+    ncfiles = []
+    n_months = get_n_months(start_date,end_date)
+    for n in range(n_months):
+        time = add_month_to_timestamp(start_date,n)
+        for ncfile in all_ncfiles:
+            if ncfile[:-3].endswith(str(time.year)):
+                month = time.strftime('%b') # 3 letter month
+                if ncfile[:-8].endswith(month):
+                    ncfiles.append(ncfile)
+    return ncfiles
+
+def _get_i_lons_and_i_lats(input_url,lon_range,lat_range):
     if lon_range is not None:
         lon_description = get_variable_name('ozroms','lon')
         i_lon_start,i_lon_end = get_lon_index_from_netcdf(input_url,lon_range,lon_description=lon_description)
@@ -31,6 +46,23 @@ def opendap_server(output_dir,input_url,lon_range=None,lat_range=None,variables=
         i_lats = slice(i_lat_start,i_lat_end,1)
     else:
         i_lats = None
+    return i_lons,i_lats
+
+def date_range_from_opendap_server(output_dir,date_range,lon_range=None,lat_range=None,
+                                   variables=['u','v'],i_depths=[0],
+                                   catalog_url=get_urls('ozroms_catalog'),
+                                   main_url=get_urls('ozroms_main'),
+                                   log_file='dl/ozroms_daily.log'):
+    ncfiles = get_ozroms_monthly_ncfiles(catalog_url,date_range[0],date_range[-1])
+    for ncfile in ncfiles:
+        input_url = f'{main_url}{ncfile}'
+        file_from_opendap_server(output_dir,input_url,lon_range=lon_range,
+                                 lat_range=lat_range,variables=variables,i_depths=i_depths,
+                                 log_file=log_file)
+
+def file_from_opendap_server(output_dir,input_url,lon_range=None,lat_range=None,
+                             variables=['u','v'],i_depths=[0],log_file='dl/ozroms.log'):
+    i_lons,i_lats = _get_i_lons_and_i_lats(input_url,lon_range,lat_range)
     netcdf = Dataset(input_url)
     time_description = get_variable_name('ozroms','time')
     times_org = netcdf[time_description][:].filled(fill_value=np.nan)

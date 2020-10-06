@@ -8,5 +8,7 @@
     "cmems_waves_reanalysis": "Core/GLOBAL_REANALYSIS_WAV_001_032/global-reanalysis-wav-001-032/",
     "nasa_modis_aqua": "https://oceandata.sci.gsfc.nasa.gov/opendap/MODISA/L3SMI/",
     "nasa_seawifs": "https://oceandata.sci.gsfc.nasa.gov/opendap/SeaWiFS/L3SMI/",
-    "nasa_ghrsst": "https://podaac-opendap.jpl.nasa.gov/opendap/hyrax/allData/ghrsst/data/GDS2/L4/GLOB/NCEI/AVHRR_OI/v2/"
+    "nasa_ghrsst": "https://podaac-opendap.jpl.nasa.gov/opendap/hyrax/allData/ghrsst/data/GDS2/L4/GLOB/NCEI/AVHRR_OI/v2/",
+    "ozroms_catalog": "http://130.95.29.56:8080/thredds/catalog/roms/ozroms_history/catalog.html",
+    "ozroms_main": "http://130.95.29.56:8080/thredds/dodsC/roms/ozroms_history/"
 }
