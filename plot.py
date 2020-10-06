@@ -8,7 +8,7 @@ import numpy as np
 import cmocean.cm as cmo
 
 def _cartopy_map_and_grid(ax,lon_range=[-180,180],lat_range=[-80,90],dx=60,dy=20):
-    ax.add_feature(cftr.COASTLINE,edgecolor='k',zorder=2)
+    ax.add_feature(cftr.LAND,facecolor='#A3A3A3',edgecolor='k',zorder=2)
     ax.set_extent([lon_range[0],lon_range[1],lat_range[0],lat_range[1]],ccrs.PlateCarree())
     lon_formatter = cticker.LongitudeFormatter()
     lat_formatter = cticker.LatitudeFormatter()
@@ -38,7 +38,7 @@ def _quiverplot(ax,lon,lat,u,v,thin=5,scale=25):
         lat = lat[i]
     ax.quiver(lon,lat,u,v,scale=scale,transform=ccrs.PlateCarree(),zorder=3)
 
-def _add_text_watermark(ax,wm_text='MegaMove',color='#D3D3D3',fontsize=100,alpha=0.5):
+def _add_text_watermark(ax,wm_text='MegaMove',color='#EEEEEE',fontsize=130,alpha=0.5):
     ax.text(0.5,0.5,wm_text,fontsize=fontsize,color=color,
              ha='center',va='center',alpha=alpha)
 
