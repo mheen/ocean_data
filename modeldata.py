@@ -39,7 +39,7 @@ def create_time_dimension(values,units):
 
 def netcdf_to_dimension(netcdf: Dataset, variable_name: str, new_name=None, i_use=None) -> Dimension:
     i_use = _all_slice_if_none(i_use)
-    values = netcdf[variable_name][i_use].filled(fill_value=np.nan)
+    values = netcdf[variable_name][:].filled(fill_value=np.nan)
     if len(values.shape) == 2:
         unique_di = np.unique(np.round(np.diff(values[:,0]),3))
         unique_dj = np.unique(np.round(np.diff(values[0,:]),3))
@@ -47,6 +47,7 @@ def netcdf_to_dimension(netcdf: Dataset, variable_name: str, new_name=None, i_us
             values = values[:,0]
         elif len(unique_di) == 1 and unique_di[0] == 0:
             values = values[0,:]
+    values = values[i_use]
     try:
         units = netcdf[variable_name].units
     except:
@@ -355,7 +356,7 @@ def from_downloaded(netcdf : Dataset, variables : list, model_name : str,
     else:
         depth = create_depth_dimension(value=depth_value)
     lat_name = get_variable_name(model_name,'lat')
-    lat = netcdf_to_dimension(netcdf,lat_name,new_name='lat',i_use=None)
+    lat = netcdf_to_dimension(netcdf,lat_name,new_name='lat',i_use=i_lats)
     lon_name = get_variable_name(model_name,'lon')
     lon = netcdf_to_dimension(netcdf,lon_name,new_name='lon',i_use=i_lons)
     modeldata = ModelData(time,depth,lat,lon)
