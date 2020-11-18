@@ -1,12 +1,13 @@
 from modeldata import from_downloaded as modeldata_from_downloaded
 import log as log
 from utilities import get_start_and_end_indices, get_urls
+from utilities import get_ncfiles_in_dir
 from utilities import get_ncfiles_from_opendap_catalog
 from utilities import get_n_months, add_month_to_timestamp
 from utilities import convert_time_to_datetime, convert_datetime_to_time
 from utilities import get_time_indices, get_variable_name
 from netCDF4 import Dataset
-from datetime import datetime
+from datetime import datetime, timedelta
 import numpy as np
 import os
 
@@ -20,8 +21,17 @@ def get_lat_index_from_netcdf(input_path,lat_range,lat_description='lat'):
     start_index,end_index = get_start_and_end_indices(lat,lat_range[0],lat_range[-1])
     return (start_index,end_index)
 
-def get_ozroms_monthly_ncfiles(catalog_url,start_date,end_date):
+def get_ozroms_daily_ncfiles_from_irds(irds_mount,start_date,end_date):
+    all_ncfiles = get_ncfiles_in_dir(irds_mount)
+    ncfiles = get_ozroms_daily_ncfiles(all_ncfiles,start_date,end_date)
+    return ncfiles
+
+def get_ozroms_monthly_ncfiles_from_opendap(catalog_url,start_date,end_date):
     all_ncfiles = get_ncfiles_from_opendap_catalog(catalog_url)
+    ncfiles = get_ozroms_monthly_ncfiles(all_ncfiles,start_date,end_date)
+    return ncfiles
+
+def get_ozroms_monthly_ncfiles(all_ncfiles,start_date,end_date):
     ncfiles = []
     n_months = get_n_months(start_date,end_date)
     for n in range(n_months):
@@ -30,6 +40,19 @@ def get_ozroms_monthly_ncfiles(catalog_url,start_date,end_date):
             if ncfile[:-3].endswith(str(time.year)):
                 month = time.strftime('%b') # 3 letter month
                 if ncfile[:-8].endswith(month):
+                    ncfiles.append(ncfile)
+    return ncfiles
+
+def get_ozroms_daily_ncfiles(all_ncfiles,start_date,end_date):
+    ncfiles = []
+    n_days = (end_date-start_date).days
+    for n in range(n_days):
+        time = start_date+timedelta(days=n)
+        for ncfile in all_ncfiles:
+            if ncfile[:-3].endswith(str(time.year)):
+                month = time.strftime('%b')
+                day = time.strftime('%d')
+                if ncfile[:13].endswith(f'{month}_{day}'):
                     ncfiles.append(ncfile)
     return ncfiles
 
@@ -48,12 +71,22 @@ def _get_i_lons_and_i_lats(input_url,lon_range,lat_range):
         i_lats = None
     return i_lons,i_lats
 
+def date_range_from_irds_server(output_dir,date_range,lon_range=None,lat_range=None,
+                                variables=['u','v'],i_depths=[0],
+                                irds_mount='/mnt/ozromsd/',log_file='dl/ozroms_daily.log'):
+    ncfiles = get_ozroms_daily_ncfiles_from_irds(irds_mount,date_range[0],date_range[1])
+    for ncfile in ncfiles:
+        input_path = f'{irds_mount}{ncfile}'
+        file_from_opendap_server(output_dir,input_path,lon_range=lon_range,
+                                 lat_range=lat_range,variables=variables,i_depths=i_depths,
+                                 log_file=log_file)
+
 def date_range_from_opendap_server(output_dir,date_range,lon_range=None,lat_range=None,
                                    variables=['u','v'],i_depths=[0],
                                    catalog_url=get_urls('ozroms_catalog'),
                                    main_url=get_urls('ozroms_main'),
                                    log_file='dl/ozroms_daily.log'):
-    ncfiles = get_ozroms_monthly_ncfiles(catalog_url,date_range[0],date_range[-1])
+    ncfiles = get_ozroms_monthly_ncfiles_from_opendap(catalog_url,date_range[0],date_range[-1])
     for ncfile in ncfiles:
         input_url = f'{main_url}{ncfile}'
         file_from_opendap_server(output_dir,input_url,lon_range=lon_range,
