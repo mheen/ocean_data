@@ -19,6 +19,7 @@
         "u": "uo",
         "v": "vo",
         "sst": "thetao",
+        "ssh":"zos",
         "salinity": "so",
         "mld": "mlotst",
         "sea_ice_cover": "siconc",
