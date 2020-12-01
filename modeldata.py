@@ -1,4 +1,5 @@
-from utilities import get_variable_name,convert_time_to_datetime, convert_lon_360_to_180
+from utilities import convert_time_to_datetime, convert_lon_360_to_180
+from utilities import get_variable_name,get_dir
 from netCDF4 import Dataset
 import numpy as np
 import matplotlib.pyplot as plt
@@ -112,6 +113,7 @@ class ModelData:
         u=None,
         v=None,
         vel=None,
+        eke=None,
         w=None,
         sst=None,
         sst_satellite=None,
@@ -145,6 +147,7 @@ class ModelData:
         self.u = u
         self.v = v
         self.vel = vel
+        self.eke = eke
         self.w = w
         self.sst = sst
         self.sst_satellite = sst_satellite
@@ -171,6 +174,14 @@ class ModelData:
         self.v10 = v10
         self.vel10 = vel10
         self.temp2m = temp2m
+
+    def add_eke(self,input_path_mean_currents=get_dir('mean_ocean_surface_currents')):
+        if getattr(self,'u') is not None and getattr(self,'v') is not None:
+            netcdf = Dataset(input_path_mean_currents)
+            u_mean = netcdf['u'][:]
+            v_mean = netcdf['v'][:]
+            eke_values = 0.5*((self.u.values-u_mean)**2+(self.v.values-v_mean)**2)
+            self.eke = Quantity4D('eke',eke_values,units='m2/s2')
 
     def convert_kelvin_to_celsius(self,conversion=-273.15):
         if self.temp2m is not None and self.temp2m.units == 'K':
@@ -297,6 +308,14 @@ class ModelData:
         if output_path is not None:
             plt.savefig(output_path,bbox_inches='tight',dpi=300)
         plt.show()
+
+    def get_filled_variable_names(self):
+        all_variables = self.get_variable_names()
+        filled_variables = []
+        for var in all_variables:
+            if getattr(self,var) is not None:
+                filled_variables.append(var)
+        return filled_variables
 
     def get_variable_names(self):
         variable_names = list(set(self.__dict__.keys())-set(['time','depth','lat','lon']))
