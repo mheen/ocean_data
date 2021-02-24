@@ -110,6 +110,7 @@ class ModelData:
         depth: Dimension,
         lat: Dimension,
         lon: Dimension,
+        h=None,
         u=None,
         v=None,
         vel=None,
@@ -144,6 +145,7 @@ class ModelData:
         self.depth = depth
         self.lat = lat
         self.lon = lon
+        self.h = h
         self.u = u
         self.v = v
         self.vel = vel
