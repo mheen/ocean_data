@@ -7,6 +7,22 @@ from datetime import datetime
 import numpy as np
 import os
 
+def daily_opendap_server(output_dir, main_data_url, dl_date, log_file='dl/hycom.log', variables=['u', 'v'], i_depths=[0]):
+    output_path = output_dir+dl_date.strftime('%Y%m%d')+'.nc'
+    if os.path.exists(output_path):
+        log.info(log_file, f'File {output_path} already exists, skipping download.')
+    else:
+        input_path = main_data_url+str(dl_date.year)
+        netcdf = Dataset(input_path)
+        times_org = netcdf['time'][:]
+        time_units = netcdf['time'].units
+        times = convert_time_to_datetime(times_org, time_units)
+        i_times = get_time_indices(times, dl_date)
+        log.info(log_file, f'Downloading {dl_date.strftime("%d-%m-%Y")}')
+        hycomdata = modeldata_from_downloaded(netcdf,variables,'hycom',i_times=i_times,i_depths=i_depths)           
+        hycomdata.write_to_netcdf(output_dir)
+        netcdf.close()
+
 def opendap_server(output_dir,main_data_url,start_date,end_date,log_file='dl/hycom.log',variables=['u','v'],i_depths=[0]):
     '''Downloads 3-hourly HYCOM data from OpenDAP server and saves data to daily netcdf file.
     

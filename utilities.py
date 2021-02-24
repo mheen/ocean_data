@@ -104,6 +104,8 @@ def get_time_indices(timeseries,time):
     for i,t in enumerate(timeseries):
         if t.date() == time.date():
             i_times.append(i)
+    if len(i_times) == 0:
+        raise ValueError(f'Time {time.strftime("%d-%m-%Y")} not found in timeseries.')
     return i_times
 
 def get_closest_time_index(time_array,time):
