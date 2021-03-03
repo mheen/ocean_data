@@ -89,12 +89,13 @@ def get_monthly_means_from_local_daily_files(input_dir : str, output_dir : str,
         log.info(log_file,f'Writing to {output_path}')
         modeldata.write_to_netcdf(output_dir,filename_format=output_filenameformat)
 
-def get_total_mean_from_local_files(input_dir,output_path,i_depths=None,i_lats=None,i_lons=None):
+def get_total_mean_from_local_files(input_dir,output_path,i_depths=None,i_lats=None,i_lons=None,
+                                    log_file='get_total_mean.log'):
     ncfiles = get_ncfiles_in_dir(input_dir)
     netcdf = Dataset(input_dir+ncfiles[0])
     time = Dimension('time',np.array([0.0]),'days since 1900-01-01')
     depth = netcdf_to_dimension(netcdf,'depth',new_name='depth',i_use=i_depths)
-    lon = netcdf_to_dimension(netcdf,'lon',new_name='lon',i_use=i_lons)    
+    lon = netcdf_to_dimension(netcdf,'lon',new_name='lon',i_use=i_lons)
     lat = netcdf_to_dimension(netcdf,'lat',new_name='lat',i_use=i_lons)
     variables = list(set(netcdf.variables.keys())-set(['time','depth','lat','lon']))
     netcdf.close()
@@ -115,36 +116,37 @@ def get_total_mean_from_local_files(input_dir,output_path,i_depths=None,i_lats=N
         modeldata.fill_variable(variable,quantity)
         modeldata.write_to_netcdf(None,output_path=output_path)
 
-def get_total_monthly_mean_from_local_files(model : str, input_dir : str, output_dir : str,
-                                       filename_format = '%Y%m', variables=None,
+def get_total_monthly_mean_from_local_files(input_dir : str, output_dir : str,
+                                       filename_format = '%Y%m', log_file='get_total_monthly_mean.log',
                                        i_depths=None, i_lats=None, i_lons=None) -> ModelData:
     ncfiles = get_ncfiles_in_dir(input_dir)
     netcdf = Dataset(input_dir+ncfiles[0])
-    depth = netcdf_to_dimension(netcdf,get_variable_name(model,'depth'),new_name='depth',i_use=i_depths)
-    lon = netcdf_to_dimension(netcdf,get_variable_name(model,'lon'),new_name='lon',i_use=i_lons)    
-    lat = netcdf_to_dimension(netcdf,get_variable_name(model,'lat'),new_name='lat',i_use=i_lons)
-    if variables is None:
-        variables = list(set(netcdf.variables.keys())-set(['time','depth','lat','lon']))
+    depth = netcdf_to_dimension(netcdf,'depth',new_name='depth',i_use=i_depths)
+    lon = netcdf_to_dimension(netcdf,'lon',new_name='lon',i_use=i_lons)
+    lat = netcdf_to_dimension(netcdf,'lat',new_name='lat',i_use=i_lons)
+    variables = list(set(netcdf.variables.keys())-set(['time','depth','lat','lon']))
     netcdf.close()
     for month in np.arange(1,13):
+        log.info(log_file, f'Getting total mean for month: {month}')
+        output_path = f'{output_dir}climatology_{datetime(1900,month,1).strftime("%b").lower()}.nc'
         # initialise modeldata
         time = Dimension('time',np.array([(datetime(1900,month,1)-datetime(1900,1,1)).days]),'days since 1900-01-01')
         modeldata = ModelData(time,depth,lat,lon)
         for variable in variables:
-            variable_model = get_variable_name(model,variable)
             n = 0
             for ncfile in ncfiles:
                 ncfile_datestr,_ = os.path.splitext(ncfile)
                 if datetime.strptime(ncfile_datestr,filename_format).month == month:
                     netcdf = Dataset(input_dir+ncfile)
                     if n == 0:
-                        quantity = netcdf_to_quantity(netcdf,variable_model,new_name=variable,i_depths=i_depths)
+                        quantity = netcdf_to_quantity(netcdf,variable,new_name=variable,i_depths=i_depths)
                     else:
-                        next_quantity = netcdf_to_quantity(netcdf,variable_model,new_name=variable,i_depths=i_depths)
+                        next_quantity = netcdf_to_quantity(netcdf,variable,new_name=variable,i_depths=i_depths)
                         quantity.values = np.concatenate((quantity.values,next_quantity.values),axis=0)
                     netcdf.close()
                     next_quantity = None
                     n += 1
             quantity.values = np.nanmean(quantity.values,axis=0)
             modeldata.fill_variable(variable,quantity)
-            modeldata.write_to_netcdf(output_dir,filename_format)
+        log.info(log_file, f'Writing to file: {output_path}')
+        modeldata.write_to_netcdf(None, output_path=output_path)
