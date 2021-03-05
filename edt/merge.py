@@ -96,7 +96,7 @@ def get_total_mean_from_local_files(input_dir,output_path,i_depths=None,i_lats=N
     time = Dimension('time',np.array([0.0]),'days since 1900-01-01')
     depth = netcdf_to_dimension(netcdf,'depth',new_name='depth',i_use=i_depths)
     lon = netcdf_to_dimension(netcdf,'lon',new_name='lon',i_use=i_lons)
-    lat = netcdf_to_dimension(netcdf,'lat',new_name='lat',i_use=i_lons)
+    lat = netcdf_to_dimension(netcdf,'lat',new_name='lat',i_use=i_lats)
     variables = list(set(netcdf.variables.keys())-set(['time','depth','lat','lon']))
     netcdf.close()
     modeldata = ModelData(time,depth,lat,lon)
@@ -123,7 +123,7 @@ def get_total_monthly_mean_from_local_files(input_dir : str, output_dir : str,
     netcdf = Dataset(input_dir+ncfiles[0])
     depth = netcdf_to_dimension(netcdf,'depth',new_name='depth',i_use=i_depths)
     lon = netcdf_to_dimension(netcdf,'lon',new_name='lon',i_use=i_lons)
-    lat = netcdf_to_dimension(netcdf,'lat',new_name='lat',i_use=i_lons)
+    lat = netcdf_to_dimension(netcdf,'lat',new_name='lat',i_use=i_lats)
     variables = list(set(netcdf.variables.keys())-set(['time','depth','lat','lon']))
     netcdf.close()
     for month in np.arange(1,13):

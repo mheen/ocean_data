@@ -1,5 +1,5 @@
 from utilities import convert_time_to_datetime, convert_lon_360_to_180
-from utilities import get_variable_name,get_dir
+from utilities import get_variable_name,get_dir, get_closest_index
 from netCDF4 import Dataset
 import numpy as np
 import matplotlib.pyplot as plt
@@ -40,15 +40,15 @@ def create_time_dimension(values,units):
 
 def netcdf_to_dimension(netcdf: Dataset, variable_name: str, new_name=None, i_use=None) -> Dimension:
     i_use = _all_slice_if_none(i_use)
-    values = netcdf[variable_name][:].filled(fill_value=np.nan)
-    if len(values.shape) == 2:
-        unique_di = np.unique(np.round(np.diff(values[:,0]),3))
-        unique_dj = np.unique(np.round(np.diff(values[0,:]),3))
+    all_values = netcdf[variable_name][:].filled(fill_value=np.nan)
+    if len(all_values.shape) == 2:
+        unique_di = np.unique(np.round(np.diff(all_values[:,0]),3))
+        unique_dj = np.unique(np.round(np.diff(all_values[0,:]),3))
         if len(unique_dj) == 1 and unique_dj[0] == 0:
-            values = values[:,0]
+            all_values = all_values[:,0]
         elif len(unique_di) == 1 and unique_di[0] == 0:
-            values = values[0,:]
-    values = values[i_use]
+            all_values = all_values[0,:]
+    values = all_values[i_use]
     try:
         units = netcdf[variable_name].units
     except:
@@ -93,6 +93,18 @@ def netcdf_to_quantity4D(netcdf : Dataset, variable_name : str, new_name=None,
     units = netcdf[variable_name].units
     new_name = _new_name_is_variable_name_if_none(new_name,variable_name)
     return Quantity4D(new_name,values,units)
+
+def get_lon_lat_index(input_path, lon_range, lat_range):
+    nc = Dataset(input_path)
+    lon = nc['lon'][:].filled(fill_value=np.nan)
+    lat = nc['lat'][:].filled(fill_value=np.nan)
+    i_lon_start = get_closest_index(lon, lon_range[0])
+    i_lon_end = get_closest_index(lon, lon_range[1])
+    i_lat_start = get_closest_index(lat, lat_range[0])
+    i_lat_end = get_closest_index(lat, lat_range[1])
+    lon_indices = np.arange(i_lon_start, i_lon_end, 1)
+    lat_indices = np.arange(i_lat_start, i_lat_end, 1)
+    return lon_indices, lat_indices
 
 def _new_name_is_variable_name_if_none(new_name,variable_name):
     if new_name is None:
@@ -394,13 +406,13 @@ def from_downloaded(netcdf : Dataset, variables : list, model_name : str,
 def from_local_file(input_path : str, variables=None,
                     i_times=None, i_depths=None, i_lats=None, i_lons=None, depth_value=None) -> ModelData:
     netcdf = Dataset(input_path)
-    time = netcdf_to_dimension(netcdf,'time',i_times)
+    time = netcdf_to_dimension(netcdf,'time',i_use=i_times)
     if 'depth' in netcdf.dimensions.keys():
         depth = netcdf_to_dimension(netcdf,'depth',i_depths)
     else:
         depth = create_depth_dimension(value=depth_value)
-    lat = netcdf_to_dimension(netcdf,'lat',i_lats)
-    lon = netcdf_to_dimension(netcdf,'lon',i_lons)
+    lat = netcdf_to_dimension(netcdf,'lat',i_use=i_lats)
+    lon = netcdf_to_dimension(netcdf,'lon',i_use=i_lons)
     modeldata = ModelData(time,depth,lat,lon)
     if variables is None:
         variables = list(set(netcdf.variables.keys())-set(['time','depth','lat','lon']))
