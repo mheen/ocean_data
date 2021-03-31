@@ -45,8 +45,9 @@ def _add_text_watermark(ax,wm_text='MegaMove',color='#EEEEEE',fontsize=130,alpha
     ax.text(0.5,0.5,wm_text,fontsize=fontsize,color=color,
              ha='center',va='center',alpha=alpha)
 
-def map_wa_velocities(modeldata,cbar_label='Surface currents [m/s]',thin=5,scale=25,
-                      cmap=cmo.speed,output_path=None):
+def map_velocities(modeldata,cbar_label='Surface currents [m/s]',thin=5,scale=25,
+                   lon_range=[112,118], lat_range=[-36,-25],
+                   cmap=cmo.speed,output_path=None):
     lon = modeldata.lon.values
     lat = modeldata.lat.values
     u = np.copy(modeldata.u.values[0,:,:])
@@ -55,8 +56,6 @@ def map_wa_velocities(modeldata,cbar_label='Surface currents [m/s]',thin=5,scale
     u[u==0] = np.nan
     v[v==0] = np.nan
     vel[vel==0] = np.nan
-    lon_range = [112,118]
-    lat_range = [-36,-25]
     plt.style.use('input/plots.mplstyle')
     fig = plt.figure()
     ax = plt.gca(projection=ccrs.PlateCarree())
