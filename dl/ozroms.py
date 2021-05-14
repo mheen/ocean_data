@@ -1,6 +1,6 @@
 from modeldata import from_downloaded as modeldata_from_downloaded
 import log as log
-from utilities import get_start_and_end_indices, get_urls
+from utilities import get_start_and_end_indices, get_urls, get_dir
 from utilities import get_ncfiles_in_dir
 from utilities import get_ncfiles_from_opendap_catalog
 from utilities import get_n_months, add_month_to_timestamp
@@ -73,7 +73,7 @@ def _get_i_lons_and_i_lats(input_url,lon_range,lat_range):
 
 def date_range_from_irds_server(output_dir,date_range,lon_range=None,lat_range=None,
                                 variables=['u','v'],i_depths=[0],
-                                irds_mount='/mnt/ozromsd/',log_file='dl/ozroms_daily.log'):
+                                irds_mount=get_dir('ozroms_daily_input'),log_file='dl/ozroms_daily.log'):
     log.info(log_file,f'Accessing IRDS: {irds_mount}')
     ncfiles = get_ozroms_daily_ncfiles_from_irds(irds_mount,date_range[0],date_range[1])
     log.info(log_file,f'Found daily ncfiles: {ncfiles[0:5]}')
