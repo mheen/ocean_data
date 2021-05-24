@@ -71,7 +71,30 @@ def _get_i_lons_and_i_lats(input_url,lon_range,lat_range):
         i_lats = None
     return i_lons,i_lats
 
-def date_range_from_irds_server(output_dir,date_range,lon_range=None,lat_range=None,
+def hourly_date_range_from_irds_file(input_path, output_dir, date_range, lon_range=None, lat_range=None,
+                                     variables = ['u', 'v'], i_depths=[0], log_file='dl/ozroms_hourly.log'):
+    log.info(log_file, f'Accessing: {input_path}')
+    i_lons,i_lats = _get_i_lons_and_i_lats(input_path, lon_range, lat_range)
+    netcdf = Dataset(input_path)
+    time_description = get_variable_name('ozroms', 'time')
+    times_org = netcdf[time_description][:].filled(fill_value=np.nan)
+    times = convert_time_to_datetime(times_org, netcdf[time_description].units)
+    n_days = (date_range[1]-date_range[0]).days
+    for i in range(n_days):
+        time = date_range[0]+timedelta(days=i)
+        output_path = f'{output_dir}{time.strftime("%Y%m%d")}.nc'
+        if os.path.exists(output_path):
+            log.info(log_file, f'File already exists, skipping: {output_path}')
+            continue
+        log.info(log_file, f'Downloading {time.strftime("%d-%m-%Y")}')
+        i_times = get_time_indices(times, time)
+        ozromsdata = modeldata_from_downloaded(netcdf, variables, 'ozroms',
+                                               i_times=i_times, i_depths=i_depths,
+                                               i_lons=i_lons, i_lats=i_lats)
+        ozromsdata.write_to_netcdf(output_dir)
+    netcdf.close()
+
+def daily_date_range_from_irds_server(output_dir,date_range,lon_range=None,lat_range=None,
                                 variables=['u','v'],i_depths=[0],
                                 irds_mount=get_dir('ozroms_daily_input'),log_file='dl/ozroms_daily.log'):
     log.info(log_file,f'Accessing IRDS: {irds_mount}')
