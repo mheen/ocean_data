@@ -22,6 +22,11 @@ class Quantity:
         self.units = units
         self.name = name
 
+class Quantity2D(Quantity):
+    def __init__(self, name:str, values:np.ndarray, units:str):
+        super().__init__(name, values, units)
+        self.dimensions = ('lat', 'lon')
+
 class Quantity3D(Quantity):
     def __init__(self, name: str, values: np.ndarray, units: str):
         super().__init__(name,values,units)
@@ -58,14 +63,25 @@ def netcdf_to_dimension(netcdf: Dataset, variable_name: str, new_name=None, i_us
 
 def netcdf_to_quantity(netcdf: Dataset, variable_name: str, new_name=None,
                        i_times=None, i_depths=None, i_lats=None, i_lons=None):
-    if len(netcdf[variable_name].shape) == 2 or len(netcdf[variable_name].shape) == 3:
-        # (if 2D: expand to include time dimension)
+    if len(netcdf[variable_name].shape) == 2:
+        return netcdf_to_quantity2D(netcdf, variable_name, new_name=new_name,
+                                    i_lats=i_lats, i_lons=i_lons)
+    if len(netcdf[variable_name].shape) == 3:
         return netcfd_to_quantity3D(netcdf,variable_name,new_name=new_name,
                                     i_times=i_times,i_lats=i_lats,i_lons=i_lons)
     if len(netcdf[variable_name].shape) == 4:
         return netcdf_to_quantity4D(netcdf,variable_name,new_name=new_name,
                                     i_times=i_times,i_depths=i_depths,
                                     i_lats=i_lats,i_lons=i_lons)
+
+def netcdf_to_quantity2D(netcdf:Dataset, variable_name:str, new_name=None,
+                         i_lats=None, i_lons=None) -> Quantity2D:
+    i_lats = _all_slice_if_none(i_lats)
+    i_lons = _all_slice_if_none(i_lons)
+    values = netcdf[variable_name][i_lats, i_lons].filled(fill_value=np.nan)
+    units = netcdf[variable_name].units
+    new_name = _new_name_is_variable_name_if_none(new_name, variable_name)
+    return Quantity2D(new_name, values, units)
 
 def netcfd_to_quantity3D(netcdf: Dataset, variable_name: str, new_name=None,
                          i_times=None, i_lats=None, i_lons=None) -> Quantity3D:

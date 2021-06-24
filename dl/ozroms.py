@@ -71,6 +71,12 @@ def _get_i_lons_and_i_lats(input_url,lon_range,lat_range):
         i_lats = None
     return i_lons,i_lats
 
+def bathymetry(input_path, output_path, lon_range=None, lat_range=None):
+    i_lons,i_lats = _get_i_lons_and_i_lats(input_path, lon_range, lat_range)
+    netcdf = Dataset(input_path)
+    modeldata = modeldata_from_downloaded(netcdf, ['h'], 'ozroms', i_lats=i_lats, i_lons=i_lons)
+    modeldata.write_to_netcdf(None, output_path=output_path)
+
 def hourly_date_range_from_irds_file(input_path, output_dir, date_range, lon_range=None, lat_range=None,
                                      variables = ['u', 'v'], i_depths=[0], log_file='dl/ozroms_hourly.log'):
     log.info(log_file, f'Accessing: {input_path}')
