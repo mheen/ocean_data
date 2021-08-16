@@ -94,7 +94,10 @@ def netcfd_to_quantity3D(netcdf: Dataset, variable_name: str, new_name=None,
         values = values_all[i_times,i_lats,i_lons]
     else:
         values = netcdf[variable_name][i_times,i_lats,i_lons].filled(fill_value=np.nan)
-    units = netcdf[variable_name].units
+    try:
+        units = netcdf[variable_name].units
+    except:
+        units = ''
     new_name = _new_name_is_variable_name_if_none(new_name,variable_name)
     return Quantity3D(new_name,values,units)
 
@@ -363,8 +366,14 @@ class ModelData:
         # --- define dimensions ---
         nc.createDimension(self.time.name,self.time.length)
         nc.createDimension(self.depth.name,self.depth.length)
-        nc.createDimension(self.lat.name,self.lat.length)
-        nc.createDimension(self.lon.name,self.lon.length)
+        if len(self.lat.values.shape) == 2:
+            nc.createDimension(self.lat.name, self.lat.values.shape[0])
+        else:
+            nc.createDimension(self.lat.name,self.lat.length)
+        if len(self.lon.values.shape) == 2:
+            nc.createDimension(self.lon.name, self.lon.values.shape[1])
+        else:
+            nc.createDimension(self.lon.name,self.lon.length)
         # --- write dimensions ---
         nc_time = nc.createVariable(self.time.name,float,self.time.name,zlib=True)
         nc_time[:] = self.time.values
@@ -372,10 +381,16 @@ class ModelData:
         nc_depth = nc.createVariable(self.depth.name,float,self.depth.name,zlib=True)
         nc_depth[:] = self.depth.values
         nc_depth.units = self.depth.units
-        nc_lat = nc.createVariable(self.lat.name,float,self.lat.name,zlib=True)
+        if len(self.lat.values.shape) == 2:
+            nc_lat = nc.createVariable(self.lat.name, float, (self.lat.name, self.lon.name), zlib=True)
+        else:
+            nc_lat = nc.createVariable(self.lat.name,float,self.lat.name,zlib=True)
         nc_lat[:] = self.lat.values
         nc_lat.units = self.lat.units
-        nc_lon = nc.createVariable(self.lon.name,float,self.lon.name,zlib=True)
+        if len(self.lon.values.shape) == 2:
+            nc_lon = nc.createVariable(self.lon.name, float, (self.lat.name, self.lon.name))
+        else:
+            nc_lon = nc.createVariable(self.lon.name,float,self.lon.name,zlib=True)
         nc_lon[:] = self.lon.values
         nc_lon.units = self.lon.units
         # --- define and write variables ---
